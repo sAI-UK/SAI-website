@@ -1,0 +1,36 @@
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      // User can only read their own profile (protects PII)
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      // Create new profile: user must own document and set server timestamps
+      allow create: if isOwner(userId) &&
+                       request.resource.data.id == request.auth.uid &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.updatedAt == request.time;
+
+      // Update existing profile: immutable fields protected, user owns document
+      allow update: if isOwner(userId) &&
+                       request.resource.data.id == resource.data.id &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       request.resource.data.updatedAt == request.time;
+    }
+  }
+}
