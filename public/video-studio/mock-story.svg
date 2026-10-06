@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title description">
+  <title id="title">SAI mock story animation</title>
+  <desc id="description">A paper story opens and simple colourful shapes become hills, a sun and a small fox.</desc>
+  <rect width="960" height="540" fill="#F5F1E8"/>
+  <circle cx="780" cy="125" r="58" fill="#D6A556"><animate attributeName="cy" values="145;115;145" dur="5s" repeatCount="indefinite"/></circle>
+  <path d="M0 390 Q190 270 390 390 T770 370 T1100 390 V540 H0Z" fill="#2E6F66"/>
+  <path d="M0 430 Q250 340 470 430 T960 410 V540 H0Z" fill="#1F4B43"/>
+  <g transform="translate(420 310)">
+    <path d="M0 70 L50 15 L100 70 L88 125 L12 125Z" fill="#D98F70"/>
+    <path d="M20 42 L10 0 L43 23 M80 42 L90 0 L57 23" fill="#D98F70"/>
+    <circle cx="35" cy="65" r="5" fill="#1F2937"/><circle cx="65" cy="65" r="5" fill="#1F2937"/>
+    <animateTransform attributeName="transform" type="translate" values="360 310;450 300;420 310" dur="5s" repeatCount="indefinite"/>
+  </g>
+  <g opacity="0.8" fill="#DCECF1">
+    <circle cx="180" cy="105" r="28"/><circle cx="215" cy="100" r="38"/><circle cx="255" cy="110" r="25"/>
+    <animateTransform attributeName="transform" type="translate" values="0 0;45 0;0 0" dur="8s" repeatCount="indefinite"/>
+  </g>
+  <text x="48" y="70" fill="#1F4B43" font-family="Georgia, serif" font-size="28">Mock story preview</text>
+  <text x="48" y="104" fill="#1F2937" opacity="0.7" font-family="Arial, sans-serif" font-size="17">No external video provider was used</text>
+  <style>@media (prefers-reduced-motion: reduce) { animate, animateTransform { display: none; } }</style>
+</svg>
