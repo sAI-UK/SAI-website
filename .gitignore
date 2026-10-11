@@ -38,3 +38,6 @@ coverage/
 
 # misc
 *.pem
+
+# Local film records, uploaded references and generated media
+.data/

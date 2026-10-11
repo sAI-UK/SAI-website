@@ -11,17 +11,16 @@ const googleResponse = () => new Response(JSON.stringify({ candidates: [{ conten
 beforeEach(() => vi.stubEnv("GEMINI_API_KEY", "test-secret"));
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe("Creator Studio", () => {
-  it("switches forms and preserves drafts without a model selector", async () => {
-    const user = userEvent.setup(); render(<CreatorStudioClient mode="live" imageConfigured />);
+  it("offers the video-only film flow with image references", async () => {
+    sessionStorage.clear(); localStorage.clear();
+    const user = userEvent.setup(); render(<CreatorStudioClient mode="live" />);
     expect(screen.queryByRole("combobox", { name: "Model" })).not.toBeInTheDocument();
-    await user.type(screen.getByLabelText("Story title"), "Lantern story");
-    await user.click(screen.getByRole("radio", { name: "Image", exact: true }));
-    await user.type(screen.getByRole("textbox", { name: "Subject", exact: true }), "A little fox");
-    expect(screen.queryByRole("radio", { name: "8 seconds" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("radio", { name: "Video", exact: true }));
-    expect(screen.getByLabelText("Story title")).toHaveValue("Lantern story");
-    await user.click(screen.getByRole("radio", { name: "Image", exact: true }));
-    expect(screen.getByRole("textbox", { name: "Subject", exact: true })).toHaveValue("A little fox");
+    await user.type(screen.getByLabelText("Film title"), "Lantern story");
+    await user.click(screen.getByRole("radio", { name: "Use a reference image" }));
+    expect(screen.getByLabelText("Reference image")).toHaveAttribute("type", "file");
+    expect(screen.getByLabelText("Film title")).toHaveValue("Lantern story");
+    expect(screen.queryByRole("button", { name: "Generate image" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Plan my film" })).toBeEnabled();
   });
   it("defaults and submits video settings as Fast despite an old environment setting", () => {
     vi.stubEnv("VEO_MODEL", "veo-3.1-generate-preview");
@@ -39,12 +38,11 @@ describe("Creator Studio", () => {
     expect(fetcher.mock.calls[0][0]).toContain("gemini-2.5-flash-image:generateContent");
     expect(JSON.parse(fetcher.mock.calls[0][1].body).generationConfig.responseFormat.image.aspectRatio).toBe("16:9");
   });
-  it("deduplicates concurrent image submissions and keeps credentials private", async () => {
+  it("disables the old standalone image generation endpoint", async () => {
     const fetcher = vi.fn().mockResolvedValue(googleResponse()); vi.stubGlobal("fetch", fetcher);
-    const request = () => new Request("http://localhost/api/image/generate", { method: "POST", body: JSON.stringify({ idea, sessionId: "session_image_test123", idempotencyKey: "request_image_test123" }) });
-    const results = await Promise.all([POST(request()), POST(request())]);
-    expect(fetcher).toHaveBeenCalledTimes(1);
-    const body = await results[0].json(); expect(body.image.dataUrl).toContain("data:image/png"); expect(JSON.stringify(body)).not.toContain("test-secret");
+    const result = await POST();
+    expect(result.status).toBe(410);
+    expect(fetcher).not.toHaveBeenCalled();
   });
   it("handles a filtered image without inventing a result", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ promptFeedback: { blockReason: "SAFETY" } }))));
@@ -54,7 +52,7 @@ describe("Creator Studio", () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ image: { dataUrl: "data:image/png;base64,aW1hZ2U=", mimeType: "image/png" } }))));
     render(<ImageStudio configured />);
-    await user.type(screen.getByRole("textbox", { name: "Subject", exact: true }), "A paper fox");
+    await user.type(screen.getByRole("textbox", { name: "Subject" }), "A paper fox");
     await user.click(screen.getByRole("button", { name: "Generate image" }));
     expect(await screen.findByRole("img", { name: "A paper fox" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Download image" })).toHaveAttribute("download", "sai-creation.png");

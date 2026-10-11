@@ -107,7 +107,8 @@ describe("Video Studio interface", () => {
 
   it("announces bounded generation progress", () => {
     render(<GenerationProgress job={{ ...job, status: "generating", progress: 45 }} onRetry={vi.fn()} />);
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Creating your video");
     expect(screen.getByText(/status will update automatically for a limited time/i)).toBeInTheDocument();
   });
 
