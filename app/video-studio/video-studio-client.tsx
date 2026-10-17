@@ -5,6 +5,7 @@ import { StoryForm } from "@/components/video-studio/story-form";
 import { VideoResult } from "@/components/video-studio/video-result";
 import { estimatedVideoCost } from "@/lib/video/settings";
 import type { PublicVideoJob, RuntimeMode, StructuredStory, VideoSettings } from "@/lib/video/types";
+import { randomId } from "@/lib/random-id";
 const emptyStory: StructuredStory = { title: "", mainCharacter: "", setting: "", action: "", value: "Kindness", style: "Storybook illustration", mood: "Hopeful", dialogue: "", duration: 8 };
 const fallback: VideoSettings = { model: "veo-3.1-fast-generate-preview", resolution: "720p", aspectRatio: "16:9" };
 export function VideoStudioClient({ mode, defaults = fallback }: { mode: RuntimeMode; defaults?: VideoSettings }) {
@@ -22,7 +23,7 @@ export function VideoStudioClient({ mode, defaults = fallback }: { mode: Runtime
   const submitting = useRef(false);
   const pollStarted = useRef(0);
   useEffect(() => {
-    session.current = sessionStorage.getItem("sai-video-session") ?? `session_${crypto.randomUUID()}`;
+    session.current = sessionStorage.getItem("sai-video-session") ?? `session_${randomId()}`;
     sessionStorage.setItem("sai-video-session", session.current);
     const saved = sessionStorage.getItem("sai-video-active");
     if (saved) { try { const parsed = JSON.parse(saved); setStory(parsed.story); setSettings({ ...parsed.settings, model: "veo-3.1-fast-generate-preview" }); setJob(parsed.job); requestKey.current = parsed.key; pollStarted.current = Date.now(); } catch { sessionStorage.removeItem("sai-video-active"); } }
@@ -46,7 +47,7 @@ export function VideoStudioClient({ mode, defaults = fallback }: { mode: Runtime
   async function generate() {
     if (submitting.current) return;
     submitting.current = true; setBusy(true); setErrors({}); setMessage("");
-    if (!requestKey.current) requestKey.current = `request_${crypto.randomUUID()}`;
+    if (!requestKey.current) requestKey.current = `request_${randomId()}`;
     sessionStorage.setItem("sai-video-active", JSON.stringify({ story, settings, job: null, key: requestKey.current }));
     try {
       const response = await fetch("/api/video/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId: session.current, idempotencyKey: requestKey.current, story, settings }) });

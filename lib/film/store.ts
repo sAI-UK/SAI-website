@@ -1,9 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { Film, PublicFilm } from "./types";
 
-export const filmRoot = () => path.resolve(process.env.FILM_DATA_DIR || ".data/films");
+// Hosted platforms such as Vercel only allow writing to the temporary folder, and it is cleared regularly.
+const defaultFilmRoot = () => (process.env.VERCEL ? path.join(os.tmpdir(), "sai-films") : ".data/films");
+export const filmRoot = () => path.resolve(process.env.FILM_DATA_DIR || defaultFilmRoot());
 export function filmPath(id: string, file = "film.json") {
   if (!/^[a-f0-9]{32}$/.test(id) || !/^[a-zA-Z0-9_.-]+$/.test(file)) throw new Error("Invalid film location.");
   return path.join(filmRoot(), id, file);

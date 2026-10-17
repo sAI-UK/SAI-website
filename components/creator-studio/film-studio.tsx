@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { visualStyles, type RuntimeMode } from "@/lib/video/types";
 import { clipCost, sceneLengths, sceneNames, type FilmBrief, type PublicFilm } from "@/lib/film/types";
 import { Spinner } from "./spinner";
+import { randomId } from "@/lib/random-id";
 
 const empty: FilmBrief = { title: "", character: "", story: "", style: "Storybook illustration", aspectRatio: "16:9" };
 const field = "mt-2 min-h-12 w-full rounded border border-forest/20 bg-paper px-4 py-3 text-base font-normal text-ink outline-none focus:border-teal focus:ring-4 focus:ring-teal/10 disabled:bg-mist";
@@ -33,9 +34,9 @@ export function FilmStudio({ mode }: { mode: RuntimeMode }) {
   }, []);
   useEffect(() => {
     mounted.current = true;
-    session.current = localStorage.getItem("sai-film-session") || `session_${crypto.randomUUID()}`;
+    session.current = localStorage.getItem("sai-film-session") || `session_${randomId()}`;
     localStorage.setItem("sai-film-session", session.current);
-    planKey.current = sessionStorage.getItem("sai-film-plan-key") || `plan_${crypto.randomUUID()}`;
+    planKey.current = sessionStorage.getItem("sai-film-plan-key") || `plan_${randomId()}`;
     sessionStorage.setItem("sai-film-plan-key", planKey.current);
     const saved = sessionStorage.getItem("sai-active-film");
     if (saved) fetch(`/api/films/${saved}`, { headers: { "x-film-session": session.current }, cache: "no-store" }).then(async response => {
@@ -64,7 +65,7 @@ export function FilmStudio({ mode }: { mode: RuntimeMode }) {
     return () => { stopped = true; clearTimeout(timer); };
   }, [film, paused, accept]);
 
-  function changeBrief(next: FilmBrief) { setBrief(next); planKey.current = `plan_${crypto.randomUUID()}`; sessionStorage.setItem("sai-film-plan-key", planKey.current); }
+  function changeBrief(next: FilmBrief) { setBrief(next); planKey.current = `plan_${randomId()}`; sessionStorage.setItem("sai-film-plan-key", planKey.current); }
   async function upload(file?: File) {
     if (!file) return;
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) { setMessage("Choose a PNG, JPEG or WebP image up to 5 MB."); return; }
@@ -87,7 +88,7 @@ export function FilmStudio({ mode }: { mode: RuntimeMode }) {
   async function action(action: string, extra: Record<string, unknown> = {}) {
     if (!film || pending.current) return;
     pending.current = true; setBusy("Saving your film"); setMessage("");
-    if (!actionKey.current) actionKey.current = `action_${crypto.randomUUID()}`;
+    if (!actionKey.current) actionKey.current = `action_${randomId()}`;
     try {
       const response = await fetch(`/api/films/${film.id}`, { method: "POST", headers: { "Content-Type": "application/json", "x-film-session": session.current }, body: JSON.stringify({ action, key: actionKey.current, ...extra }) });
       const data = await response.json();

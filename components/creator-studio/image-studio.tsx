@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import type { ImageIdea, ImageResult } from "@/lib/image/generation";
+import { randomId } from "@/lib/random-id";
 
 const initial: ImageIdea = { subject: "", setting: "", action: "", style: "Storybook illustration", mood: "Hopeful", lighting: "Soft natural light", composition: "", text: "", aspectRatio: "1:1" };
 const fields = [
@@ -32,9 +33,9 @@ export function ImageStudio({ configured }: { configured: boolean }) {
     event.preventDefault();
     if (submitting.current) return;
     submitting.current = true; setBusy(true); setMessage(""); setErrors({});
-    const sessionId = sessionStorage.getItem("sai-video-session") ?? `session_${crypto.randomUUID()}`;
+    const sessionId = sessionStorage.getItem("sai-video-session") ?? `session_${randomId()}`;
     sessionStorage.setItem("sai-video-session", sessionId);
-    if (!requestKey.current) requestKey.current = `image_${crypto.randomUUID()}`;
+    if (!requestKey.current) requestKey.current = `image_${randomId()}`;
     try {
       const response = await fetch("/api/image/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idea, sessionId, idempotencyKey: requestKey.current }) });
       const data = await response.json();
