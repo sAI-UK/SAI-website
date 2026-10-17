@@ -11,7 +11,7 @@ type Props = {
 };
 
 const fieldClass =
-  "mt-2 min-h-12 w-full rounded-2xl border border-forest/20 bg-white px-4 py-3 text-base text-ink outline-none transition placeholder:text-ink/40 focus:border-teal focus:ring-4 focus:ring-teal/10";
+  "mt-2 min-h-12 w-full rounded-md border border-forest/20 bg-paper px-4 py-3 text-base text-ink outline-none transition placeholder:text-ink/40 focus:border-teal focus:ring-4 focus:ring-teal/10";
 
 export function StoryForm({ story, errors, onChange, onContinue, busy, resolution = "720p", disabled = false }: Props) {
   const set = <K extends keyof StructuredStory>(key: K, value: StructuredStory[K]) =>
@@ -28,7 +28,7 @@ export function StoryForm({ story, errors, onChange, onContinue, busy, resolutio
     >
       <fieldset disabled={busy} className="space-y-8">
       {Object.keys(errors).length > 0 && (
-        <div id="story-error-summary" role="alert" className="rounded-2xl border border-coral/40 bg-coral/10 p-5">
+        <div id="story-error-summary" role="alert" className="rounded-md border border-coral/40 bg-coral/10 p-5">
           <p className="font-semibold text-forest">Please check these parts of your story:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/75">
             {Object.entries(errors).map(([field, message]) => (
@@ -87,7 +87,7 @@ export function StoryForm({ story, errors, onChange, onContinue, busy, resolutio
           <legend className="font-medium text-forest">Video duration</legend>
           <div className="mt-2 grid grid-cols-3 gap-2">
             {videoDurations.map((duration) => (
-              <label key={duration} className={`flex min-h-12 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2 text-sm font-semibold transition focus-within:ring-4 focus-within:ring-teal/10 ${story.duration === duration ? "border-forest bg-forest text-white" : "border-forest/20 bg-white text-forest"}`}>
+              <label key={duration} className={`flex min-h-12 cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm font-semibold transition focus-within:ring-4 focus-within:ring-teal/10 ${story.duration === duration ? "border-forest bg-forest text-white" : "border-forest/20 bg-paper text-forest"}`}>
                 <input className="sr-only" type="radio" name="duration" value={duration} disabled={resolution === "1080p" && duration !== 8} checked={story.duration === duration} onChange={() => set("duration", duration)} />
                 {duration} seconds
               </label>
@@ -102,7 +102,7 @@ export function StoryForm({ story, errors, onChange, onContinue, busy, resolutio
         <textarea id="dialogue" value={story.dialogue ?? ""} onChange={(e) => set("dialogue", e.target.value)} className={`${fieldClass} min-h-24 resize-y`} maxLength={280} placeholder="A short line your character might say" />
       </div>
 
-      <button disabled={busy || disabled} className="min-h-12 rounded-full bg-forest px-7 py-3 font-semibold text-white transition hover:bg-forest/90 focus:outline-none focus:ring-4 focus:ring-teal/25 disabled:cursor-not-allowed disabled:opacity-60">
+      <button disabled={busy || disabled} className="min-h-12 rounded bg-forest px-7 py-3 font-semibold text-white transition hover:bg-forest/90 focus:outline-none focus:ring-4 focus:ring-teal/25 disabled:cursor-not-allowed disabled:opacity-60">
         {busy ? "Starting generation…" : "Generate video"}
       </button>
       </fieldset>

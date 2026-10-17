@@ -4,17 +4,17 @@ import { contactEmail, navigation } from "@/lib/site-content";
 
 export function SiteFooter() {
   return (
-    <footer id="contact" className="border-t border-forest/10 bg-white">
+    <footer id="contact" className="site-footer border-t">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.3fr_0.7fr] lg:px-8">
         <div className="max-w-2xl">
-          <p className="font-serif text-3xl text-forest">SAI</p>
-          <p className="mt-4 text-base leading-8 text-ink/72">
+          <p className="font-mono text-2xl text-forest">SAI</p>
+          <p className="mt-4 text-base leading-8 text-ink/80">
             A UK-based education and social impact initiative developing a thoughtful,
             values-led approach to children&apos;s character, creativity and responsible AI
             awareness.
           </p>
           <div className="mt-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal">
+            <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">
               Contact
             </p>
             <a
@@ -32,7 +32,7 @@ export function SiteFooter() {
 
         <div className="grid gap-8 sm:grid-cols-1">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-forest/80">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-ink/80">
               Explore
             </h2>
             <ul className="mt-4 space-y-3 text-sm text-ink/75">

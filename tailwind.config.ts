@@ -9,21 +9,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#1F2937",
-        mist: "#F5F1E8",
-        sand: "#E7DCC8",
-        forest: "#1F4B43",
-        teal: "#2E6F66",
-        sky: "#DCECF1",
-        coral: "#D98F70",
-        gold: "#D6A556",
+        // Each colour comes from a CSS variable so the site themes can repaint it (see app/globals.css).
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        mist: "rgb(var(--c-mist) / <alpha-value>)",
+        sand: "rgb(var(--c-sand) / <alpha-value>)",
+        forest: "rgb(var(--c-forest) / <alpha-value>)",
+        teal: "rgb(var(--c-teal) / <alpha-value>)",
+        sky: "rgb(var(--c-sky) / <alpha-value>)",
+        coral: "rgb(var(--c-coral) / <alpha-value>)",
+        gold: "rgb(var(--c-gold) / <alpha-value>)",
+        paper: "rgb(var(--c-paper) / <alpha-value>)",
+      },
+      fontFamily: {
+        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+        mono: ['"Courier Prime"', '"Courier New"', 'monospace'],
       },
       boxShadow: {
-        card: "0 24px 60px rgba(21, 45, 42, 0.12)",
+        card: "none",
       },
       backgroundImage: {
         grain:
-          "radial-gradient(circle at 20% 20%, rgba(214,165,86,0.18), transparent 25%), radial-gradient(circle at 80% 0%, rgba(46,111,102,0.16), transparent 30%), radial-gradient(circle at 50% 80%, rgba(217,143,112,0.14), transparent 24%)",
+          "none",
       },
       maxWidth: {
         proseWide: "72rem",

@@ -1,15 +1,16 @@
 import Link from "next/link";
 
+import { ThemePicker } from "@/components/theme-picker";
 import { navigation } from "@/lib/site-content";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-forest/10 bg-white/90 backdrop-blur">
+    <header className="site-header sticky top-0 z-50 border-b">
       <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-6">
           <Link href="/#home" className="flex items-center gap-3" aria-label="SAI home">
             <div>
-              <p className="font-serif text-2xl font-semibold text-forest">SAI</p>
+              <p className="font-mono text-xl font-semibold text-forest">SAI</p>
               <p className="text-sm text-ink/65">Character, creativity and responsible AI</p>
             </div>
           </Link>
@@ -20,7 +21,7 @@ export function SiteHeader() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`rounded-full px-4 py-2 text-sm transition ${item.highlighted ? "bg-sky font-semibold text-forest hover:bg-sky/70" : "text-ink/75 hover:bg-mist hover:text-forest"}`}
+                    className={`rounded px-3 py-2 text-xs transition ${item.highlighted ? "bg-sky font-semibold text-forest hover:bg-sky/70" : "text-ink/75 hover:bg-mist hover:text-forest"}`}
                   >
                     {item.label}
                   </Link>
@@ -29,12 +30,15 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          <Link
+          <div className="flex items-center gap-2">
+            <ThemePicker />
+            <Link
             href="/#contact"
-            className="rounded-full border border-forest/15 px-5 py-3 text-sm font-medium text-forest transition hover:border-forest hover:bg-mist"
+            className="rounded border border-sand px-5 py-3 text-sm font-medium text-forest transition hover:border-forest hover:bg-mist"
           >
             Contact
-          </Link>
+            </Link>
+          </div>
         </div>
 
         <nav aria-label="Mobile primary" className="mt-4 lg:hidden">
@@ -43,7 +47,7 @@ export function SiteHeader() {
               <li key={item.href} className="shrink-0">
                 <Link
                   href={item.href}
-                  className={`block rounded-full border px-4 py-2 text-sm transition ${item.highlighted ? "border-teal/25 bg-sky font-semibold text-forest" : "border-forest/10 bg-white text-ink/75 hover:border-forest/20 hover:text-forest"}`}
+                  className={`block rounded border px-3 py-2 text-xs transition ${item.highlighted ? "border-teal/25 bg-sky font-semibold text-forest" : "border-sand bg-paper text-ink/75 hover:border-forest/20 hover:text-forest"}`}
                 >
                   {item.label}
                 </Link>

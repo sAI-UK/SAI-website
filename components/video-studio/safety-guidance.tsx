@@ -1,7 +1,7 @@
 export function SafetyGuidance() {
   return (
-    <aside className="rounded-[1.5rem] border border-gold/35 bg-amber-50 p-6" aria-labelledby="privacy-guidance-title">
-      <h2 id="privacy-guidance-title" className="font-serif text-2xl text-forest">Keep private things private</h2>
+    <aside className="rounded-md border border-gold/35 bg-amber-50 p-6" aria-labelledby="privacy-guidance-title">
+      <h2 id="privacy-guidance-title" className="font-mono text-xl text-ink">Keep private things private</h2>
       <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-ink/75">
         <li>Do not enter your full name or another child&apos;s name.</li>
         <li>Do not enter an address, school name, phone number or social-media handle.</li>
