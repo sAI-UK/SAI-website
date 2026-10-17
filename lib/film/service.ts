@@ -1,9 +1,8 @@
-import { writeFile } from "node:fs/promises";
 import { validOperation } from "@/lib/video/providers/veo";
 import { downloadClip, google, GoogleRequestError } from "./google";
 import { assembleFilm, checkMediaEngine, mockClip, saveNarration } from "./media";
 import { textField } from "./planner";
-import { filmPath, saveFilm } from "./store";
+import { saveFilm, storeFilmFile, writeFilmFile } from "./store";
 import { sceneNames, type Film } from "./types";
 
 export function scenePrompt(film: Film, index: number) {
@@ -44,7 +43,7 @@ export async function advanceFilm(film: Film) {
       if (film.attempts >= 12) { film.status = "failed"; scene.status = "failed"; scene.error = "This film has reached its 12-clip spending limit."; await saveFilm(film); return film; }
       scene.status = "submitting"; scene.attempts++; film.attempts++; await saveFilm(film);
       try {
-        if (film.mode === "demo") { scene.file = await mockClip(film, index); scene.status = "ready"; }
+        if (film.mode === "demo") { scene.file = await mockClip(film, index); await storeFilmFile(film.id, scene.file); scene.status = "ready"; }
         else {
           const reference = film.brief.image;
           // predictLongRunning uses the Veo image schema, unlike the planner's
@@ -70,7 +69,7 @@ export async function advanceFilm(film: Film) {
       }
       const bytes = await downloadClip(scene.uri!);
       scene.file = `scene-${index}-${scene.attempts}.mp4`;
-      await writeFile(filmPath(film.id, scene.file), bytes);
+      await writeFilmFile(film.id, scene.file, bytes);
       scene.status = "ready"; scene.error = undefined; film.error = undefined;
     } catch (error) { film.error = (error as Error).message; /* Poll/download errors never submit a new paid request. */ }
     await saveFilm(film); return film;

@@ -1,8 +1,7 @@
-import { readdir } from "node:fs/promises";
 import { apiError, validSessionId } from "@/lib/video/http";
 import { checkRateLimit } from "@/lib/video/rate-limit";
 import { validateBrief, planFilm } from "@/lib/film/planner";
-import { filmId, filmRoot, locked, readFilm, saveFilm } from "@/lib/film/store";
+import { filmId, locked, readFilm, savedFilmCount, saveFilm } from "@/lib/film/store";
 import { filmResponse, readBody } from "@/lib/film/http";
 import type { Film } from "@/lib/film/types";
 export const runtime = "nodejs";
@@ -16,9 +15,9 @@ export async function POST(request: Request) {
       const id = filmId(body.session, body.key);
       const existing = await readFilm(id);
       if (existing) return filmResponse(request, existing);
-      const folders = await readdir(filmRoot()).catch(() => []);
+      const saved = await savedFilmCount();
       const limit = Math.max(1, Math.min(100, Number(process.env.FILM_MAX_SAVED || 20) || 20));
-      if (folders.length >= limit) return apiError(`This demo has reached its limit of ${limit} saved films. Archive old films on the server before creating more.`, 429);
+      if (saved >= limit) return apiError(`This demo has reached its limit of ${limit} saved films. Archive old films on the server before creating more.`, 429);
       const demo = process.env.VIDEO_PROVIDER === "mock";
       if (!demo && !process.env.GEMINI_API_KEY?.trim()) return apiError("Add your Gemini API key on the server to enable planning.", 503);
       const brief = await validateBrief(body.brief);
