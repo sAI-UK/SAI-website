@@ -21,15 +21,14 @@ const config: Config = {
         paper: "rgb(var(--c-paper) / <alpha-value>)",
       },
       fontFamily: {
-        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
-        mono: ['"Courier Prime"', '"Courier New"', 'monospace'],
+        serif: ['"Source Serif 4"', "Georgia", "serif"],
+        mono: ['"Courier Prime"', '"Courier New"', "monospace"],
       },
       boxShadow: {
         card: "none",
       },
       backgroundImage: {
-        grain:
-          "none",
+        grain: "none",
       },
       maxWidth: {
         proseWide: "72rem",
