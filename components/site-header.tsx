@@ -20,7 +20,7 @@ export function SiteHeader() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`whitespace-nowrap rounded px-3 py-2 text-sm transition 2xl:text-base ${item.highlighted ? "bg-sky font-semibold text-forest hover:bg-sky/70" : "text-ink/75 hover:bg-sky/60 hover:text-forest"}`}
+                    className="whitespace-nowrap rounded px-3 py-2 text-sm text-ink/75 transition hover:bg-sky/60 hover:text-forest 2xl:text-base"
                   >
                     {item.label}
                   </Link>
@@ -46,7 +46,7 @@ export function SiteHeader() {
               <li key={item.href} className="shrink-0">
                 <Link
                   href={item.href}
-                  className={`block whitespace-nowrap rounded border px-3 py-2 text-sm transition ${item.highlighted ? "border-teal/25 bg-sky font-semibold text-forest" : "border-sand bg-paper text-ink/75 hover:border-forest/20 hover:text-forest"}`}
+                  className="block whitespace-nowrap rounded border border-sand bg-paper px-3 py-2 text-sm text-ink/75 transition hover:border-forest/20 hover:text-forest"
                 >
                   {item.label}
                 </Link>

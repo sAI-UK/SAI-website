@@ -26,6 +26,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* The notebook grid runs behind every page. */
@@ -414,6 +416,11 @@ section .sky-art:nth-of-type(3n) { animation-duration: 21s; animation-delay: -11
 .pen-pad-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 22px; }
 .pen-pad-note { margin-left: auto; font-size: 1.3rem; }
 
+@media (max-width: 1023px) {
+  .fence-boards li a { display: inline-block; padding-block: 6px; }
+  .fence-boards a.inline-flex { padding-block: 6px; }
+}
+
 /* The ground: scaled to fill wide screens; narrower ones keep the cows in view and crop the sides */
 .meadow-scene { position: relative; container-type: inline-size; overflow-x: clip; }
 .meadow-stage { position: relative; transform-origin: 50% 100%; }
@@ -471,16 +478,16 @@ section .sky-art:nth-of-type(3n) { animation-duration: 21s; animation-delay: -11
 }
 
 @media (max-width: 719px) {
-  .sky-hero { padding: 26vw 0 270px; }
+  .sky-hero { padding: 31vw 0 195px; }
   .cloud-deck { --deck-w: 900px; --deck-h: 432px; bottom: -322px; }
   .cloud-deck-front { --deck-h: 138px; bottom: -36px; }
-  .sky-section { padding-block: 56px; }
+  .sky-section { padding-block: 44px; }
   .sky-section-tight { padding-top: 12px; }
   .sky-stars { bottom: auto; right: 0; height: 140.6vw; }
   .sky-stars-art img { height: auto; }
   .sky-plane { bottom: 56px; animation-duration: 70s; }
   .wind-plane { width: 150px; }
-  .sparkle-side { display: none; }
+  .sparkle-side, .satellite { display: none; }
   .wind-cloud { width: 112px; top: -40px; }
   .shooting-star { width: 90px; }
   .meadow-clouds { --u: calc(100cqw / 1000); }
@@ -493,7 +500,44 @@ section .sky-art:nth-of-type(3n) { animation-duration: 21s; animation-delay: -11
   .day-sun { --u: calc(100cqw / 640); left: calc(450 * var(--u)); top: calc(-3 * var(--u)); width: calc(150 * var(--u)); }
   .night-moon { --u: calc(100cqw / 640); left: calc(491 * var(--u)); top: calc(38 * var(--u)); width: calc(68 * var(--u)); height: calc(68 * var(--u)); }
   .farm-lights { --u: calc(100cqw / 640); --glow: calc(2.2 * var(--u)); left: calc(50% + 22.3 * var(--u)); bottom: calc(305 * var(--u)); width: calc(32.2 * var(--u)); height: calc(11.2 * var(--u)); }
-  .ink-card-roomy { padding: 28px; }
+  .ink-card-roomy { padding: 22px; }
+
+  /* More of the small screen for reading: the header scrolls away, and links land just above their section */
+  .site-header { position: static; }
+  .site-header > div { padding-block: 8px; }
+  .site-header nav[aria-label="Mobile primary"] { margin-top: 8px; }
+  .site-header nav[aria-label="Mobile primary"] a { padding: 7px 10px; font-size: 13px; }
+  [id] { scroll-margin-top: 12px; }
+  .logo { font-size: 1.4rem; }
+
+  /* Comfortable reading sizes and spacing */
+  .ink-card { padding: 22px; }
+  .ink-step { padding: 16px 18px; gap: 10px; }
+  .ink-step-number { width: 34px; font-size: 1.9rem; }
+  .ink-principle { padding: 16px 12px; font-size: 14px; }
+  .ink-principle:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .section-title { font-size: 1.5rem; }
+  .card-title { font-size: 1.2rem; }
+  .pull-quote { font-size: 1.3rem; }
+  .hero-lede { font-size: 1.02rem; line-height: 1.6; }
+  .home-sky .text-lg { font-size: 1.02rem; line-height: 1.65; }
+  .home-sky .text-base { line-height: 1.65; }
+  .sky-landing { padding-bottom: 110px; }
+
+  /* Buttons fill the width and are easy to tap */
+  .hero-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+  .pen-pad-tools .ink-button { flex: 1 1 auto; }
+
+  /* Values in two columns */
+  .value-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 8px; font-size: 15px; }
+  .value-list li { gap: 8px; }
+  .value-list img { width: 40px; height: 40px; }
+
+  /* The pad traps a finger for drawing, so it leaves room to scroll past it */
+  .pen-pad-surface { height: 300px; }
+
+  /* Footer links are easy to tap, and the grass tile is lighter */
+  .ground::before { background-image: url("/ballpoint/ground-mobile.webp"); background-size: 640px 410px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
