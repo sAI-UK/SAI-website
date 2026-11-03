@@ -68,6 +68,7 @@
 
   whole("ground", 1000, 640, 1.25, (ctx) => Scenes.drawGrassTile(ctx, 1000, 640, 88));
 
+  whole("ground-mobile", 640, 410, 1.25, (ctx) => Scenes.drawGrassTile(ctx, 640, 410, 88));
   whole("fence-top", 480, 104, 2, (ctx) => Scenes.drawFenceTop(ctx, 480, 104, 4));
   whole("fence-boards", 480, 320, 1.5, (ctx) => Scenes.drawFenceBoards(ctx, 480, 320, 12));
 

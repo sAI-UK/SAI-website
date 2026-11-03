@@ -26,8 +26,8 @@ const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low,
 
 /**
  * Smooth wheel scrolling for the homepage: movement eases rather than jumps, gains speed on the way down, settles onto
- * a section when it stops close to one, pulls onto the meadow and resists leaving it. Keyboard, scrollbar and
- * link scrolling are left alone. Off for reduced motion.
+ * a section when it stops close to one, pulls onto the meadow and resists leaving it. Touch, keyboard, scrollbar
+ * and link scrolling are left alone. Off for reduced motion.
  */
 export function GravityScroll() {
   useEffect(() => {
@@ -50,7 +50,7 @@ export function GravityScroll() {
     let lastY = window.scrollY;
     let goingDown = true;
     let touching = false;
-    // Only wheel and touch settle onto sections, so dragging the scrollbar or following a link is never overridden
+    // Only the wheel settles onto sections, so dragging the scrollbar or following a link is never overridden
     let settleAllowed = false;
     let settleTimer = 0;
 
@@ -141,7 +141,7 @@ export function GravityScroll() {
       if (settleAllowed) queueSettle();
     };
     const onTouchStart = () => { touching = true; stop(); };
-    const onTouchEnd = () => { touching = false; settleAllowed = true; queueSettle(); };
+    const onTouchEnd = () => { touching = false; };
     // Anything else taking over the scroll stops the motion straight away
     const handOver = () => { stop(); settleAllowed = false; window.clearTimeout(settleTimer); };
 

@@ -256,7 +256,7 @@ export default function HomePage() {
             title="SAI is being built around credibility, care and child-centred design."
             description="Visitors should be able to see clearly that safeguarding and careful AI use are not side notes. They are central to the model."
           />
-          <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-12 grid grid-cols-2 gap-4 md:gap-5 xl:grid-cols-5">
             {trustPrinciples.map((principle, index) => (
               <InkCard key={principle} variant={index} className="ink-principle">
                 <p>{principle}</p>
@@ -306,7 +306,7 @@ export default function HomePage() {
             <p className="eyebrow">Responsible AI approach</p>
             <h2 className="section-title">Careful use, clear boundaries and critical thinking over passive use.</h2>
           </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-10 grid grid-cols-2 gap-4 md:gap-5 xl:grid-cols-3">
             {responsibleAiPrinciples.map((principle, index) => (
               <InkCard key={principle} as="article" variant={index} className="ink-principle">
                 <p>{principle}</p>
