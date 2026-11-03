@@ -9,7 +9,7 @@ const statements = [
 export function ResponsibleUseChecklist({ checked, onChange, onSubmit, busy }: { checked: boolean; onChange: (value: boolean) => void; onSubmit: () => void; busy: boolean }) {
   return (
     <section className="rounded-md border border-sand bg-sky/55 p-6 sm:p-8" aria-labelledby="agreement-title">
-      <h2 id="agreement-title" className="font-mono text-2xl text-ink">Responsible creation agreement</h2>
+      <h2 id="agreement-title" className="font-display text-2xl text-ink">Responsible creation agreement</h2>
       <p className="mt-3 text-sm leading-6 text-ink/70">This is a learning check, not a legal consent form. Read each statement before ticking the box.</p>
       <ul className="mt-5 space-y-2 text-sm leading-6 text-ink/80">
         {statements.map((statement) => <li key={statement} className="flex gap-3"><span aria-hidden="true" className="text-teal">✓</span>{statement}</li>)}

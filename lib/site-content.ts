@@ -3,6 +3,7 @@ export const navigation = [
   { label: "About", href: "/#about" },
   { label: "Safeguarding & Responsible AI", href: "/#safeguarding" },
   { label: "Creator Studio", href: "/creator-studio", highlighted: true },
+  { label: "Canvas", href: "/canvas", highlighted: true },
 ];
 
 export const values = [

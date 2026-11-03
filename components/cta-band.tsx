@@ -15,7 +15,7 @@ export function CtaBand({ title, description, primary, secondary }: CtaBandProps
           <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">
             Take the next step
           </p>
-          <h2 className="mt-4 font-mono text-2xl leading-tight text-ink">{title}</h2>
+          <h2 className="mt-4 font-display text-2xl leading-tight text-ink">{title}</h2>
           <p className="mt-4 text-lg leading-8 text-ink/80">{description}</p>
         </div>
         <div className="mt-8 flex flex-wrap gap-4 lg:mt-0 lg:justify-end">

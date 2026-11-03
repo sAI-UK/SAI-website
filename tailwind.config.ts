@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Each colour comes from a CSS variable so the site themes can repaint it (see app/globals.css).
+        // Each colour comes from a CSS variable (see the top of app/globals.css).
         ink: "rgb(var(--c-ink) / <alpha-value>)",
         mist: "rgb(var(--c-mist) / <alpha-value>)",
         sand: "rgb(var(--c-sand) / <alpha-value>)",
@@ -21,8 +21,9 @@ const config: Config = {
         paper: "rgb(var(--c-paper) / <alpha-value>)",
       },
       fontFamily: {
-        serif: ['"Source Serif 4"', "Georgia", "serif"],
-        mono: ['"Courier Prime"', '"Courier New"', "monospace"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
+        hand: ["var(--font-hand)", "cursive"],
       },
       boxShadow: {
         card: "none",

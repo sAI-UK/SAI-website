@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SAI Canvas Director</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Layout: a film studio window on SAI's warm crayon paper: scene strip, stage, inspector, full-width timeline. */
+:root {
+  --bg: #f5eddc; --page: #fffcf4; --panel: #fbf7ee; --wash: #ece2cc;
+  --ink: #2a211b; --muted: #6e6253; --line: #d8c8a8;
+  --forest: #43607f; --coral: #b0502c; --gold: #b27a1f; --olive: #5f7232; --tape: #e9c77f;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1713; --page: #221d18; --panel: #2a241e; --wash: #362e26;
+    --ink: #f1e7d5; --muted: #b5a68f; --line: #4a3f33;
+    --forest: #9db9d8; --coral: #e58c64; --gold: #e2b45c; --olive: #b0c777; --tape: #7a5f2c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1713; --page: #221d18; --panel: #2a241e; --wash: #362e26;
+  --ink: #f1e7d5; --muted: #b5a68f; --line: #4a3f33;
+  --forest: #9db9d8; --coral: #e58c64; --gold: #e2b45c; --olive: #b0c777; --tape: #7a5f2c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif); font-size: 16px; line-height: 1.5; }
+h1, h2, h3 { text-wrap: balance; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+
+.wrap {
+  max-width: 1440px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 18px;
+}
+.intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 24px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--coral); margin: 0 0 4px; }
+.intro h1 { font-size: clamp(26px, 3.4vw, 38px); line-height: 1.15; margin: 0; }
+.intro p.lede { margin: 6px 0 0; max-width: 62ch; color: var(--muted); }
+.notes-toggle { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13px; cursor: pointer; user-select: none; }
+.notes-toggle input { width: 18px; height: 18px; accent-color: var(--forest); }
+
+.app { background: var(--page); border: 1px solid var(--line); border-radius: 6px; }
+
+/* Top bar */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.logo { font-family: var(--mono); font-weight: 700; font-size: 21px; color: var(--forest); }
+.film-name { font-weight: 600; font-size: 17px; }
+.tabs { display: flex; align-items: center; gap: 2px; overflow-x: auto; flex: 1 1 auto; min-width: 0; }
+.tab { background: none; border: 0; padding: 7px 11px; border-radius: 4px; color: var(--muted); cursor: pointer; white-space: nowrap; font-size: 15px; }
+.tab:hover { color: var(--forest); background: var(--panel); }
+.tab[aria-selected="true"] { background: var(--wash); color: var(--forest); font-weight: 600; }
+.tab-sep { color: var(--line); font-family: var(--mono); }
+.bar-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.meter { font-family: var(--mono); font-size: 12px; color: var(--muted); display: grid; gap: 4px; min-width: 130px; }
+.meter b { color: var(--ink); font-weight: 700; }
+.meter-bar { height: 6px; background: var(--wash); border-radius: 3px; overflow: hidden; }
+.meter-bar i { display: block; height: 100%; background: var(--coral); border-radius: 3px; width: 0; transition: width .3s; }
+
+.btn { border: 1px solid var(--line); background: var(--panel); padding: 7px 14px; border-radius: 4px; cursor: pointer; font-size: 15px; white-space: nowrap; }
+.btn:hover { border-color: var(--forest); }
+.btn.primary { background: var(--forest); border-color: var(--forest); color: var(--page); font-weight: 600; }
+.btn.small { padding: 4px 10px; font-size: 14px; }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* Animate view */
+.animate { display: grid; grid-template-columns: 196px minmax(0, 1fr) 280px; grid-template-areas: "scenes stage insp" "tl tl tl"; }
+.panel-h { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.scenes { grid-area: scenes; padding: 14px; }
+#sceneList { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.scene-card { display: block; width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px; cursor: pointer; }
+.scene-card:hover { border-color: var(--forest); }
+.scene-card.on { border-color: var(--forest); box-shadow: 0 0 0 2px color-mix(in srgb, var(--forest) 40%, transparent); }
+.scene-card canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 2px; }
+.sc-meta { display: flex; gap: 6px; align-items: baseline; margin-top: 5px; font-size: 14px; }
+.sc-num, .sc-dur { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.sc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.add { width: 100%; margin-top: 8px; border: 1px dashed var(--line); background: none; border-radius: 4px; padding: 8px; cursor: pointer; color: var(--muted); }
+.add:hover { color: var(--forest); border-color: var(--forest); }
+
+.stage-col { grid-area: stage; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+.stage-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; background: var(--panel); padding: 5px 12px; cursor: pointer; font-size: 14px; }
+.seg button[aria-pressed="true"] { background: var(--forest); color: var(--page); }
+.swatches { display: inline-flex; gap: 6px; align-items: center; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--page); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.stage-frame { position: relative; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: #141c45; }
+.stage-frame canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; }
+.stage-frame.drawing { cursor: crosshair; box-shadow: 0 0 0 3px var(--gold); }
+.draw-hint { position: absolute; left: 10px; top: 10px; font-family: var(--mono); font-size: 12px; background: #fbf7eeee; color: #2a211b; padding: 3px 8px; border-radius: 3px; pointer-events: none; }
+.transport { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+
+.inspector { grid-area: insp; padding: 14px; min-width: 0; }
+.insp-kind { font-weight: 600; font-size: 18px; margin: 0 0 2px; }
+.insp-sub { font-size: 14px; color: var(--muted); margin: 0 0 12px; }
+.field { display: grid; gap: 3px; margin-bottom: 10px; }
+.field > span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+input[type="number"], input[type="text"], select, textarea {
+  width: 100%; font: inherit; font-size: 15px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink);
+}
+input[type="range"] { width: 100%; accent-color: var(--forest); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--wash); border: 0; color: var(--ink); }
+button.chip { cursor: pointer; }
+button.chip:hover { background: color-mix(in srgb, var(--forest) 20%, var(--wash)); }
+.crew { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.crew h3 { font-size: 17px; margin: 0 0 2px; }
+.crew .insp-sub { margin-bottom: 8px; }
+.crew form { display: flex; gap: 6px; margin-bottom: 8px; }
+.crew form input { min-width: 0; }
+#crewLog { font-size: 14px; background: var(--wash); padding: 8px 10px; border-radius: 4px; margin: 10px 0 0; }
+
+/* Timeline */
+.timeline { grid-area: tl; border-top: 1px solid var(--line); padding: 12px 14px 16px; min-width: 0; }
+.tl-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+.tl-head .panel-h { margin-bottom: 6px; }
+.hint { font-size: 13px; color: var(--muted); }
+.tl-scroll { overflow-x: auto; }
+.tl { position: relative; min-width: 640px; }
+.tl-row { display: flex; border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.tl-label { width: 96px; flex: none; font-family: var(--mono); font-size: 13px; color: var(--muted); padding: 7px 8px 0 0; }
+.tl-lane { position: relative; flex: 1; min-height: 32px; }
+.ruler .tl-lane { height: 22px; min-height: 22px; cursor: pointer; }
+.ruler { border-bottom-color: var(--line); }
+.tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--muted); padding-left: 3px; line-height: 1.2; }
+.clip {
+  position: absolute; height: 23px; padding: 0 8px; border-radius: 3px; border: 1px solid;
+  font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;
+  cursor: grab; touch-action: none; background: var(--panel);
+}
+.clip:active { cursor: grabbing; }
+.t-hero { background: color-mix(in srgb, var(--coral) 24%, var(--panel)); border-color: color-mix(in srgb, var(--coral) 65%, var(--panel)); }
+.t-camera { background: color-mix(in srgb, var(--forest) 24%, var(--panel)); border-color: color-mix(in srgb, var(--forest) 65%, var(--panel)); }
+.t-effects { background: color-mix(in srgb, var(--olive) 26%, var(--panel)); border-color: color-mix(in srgb, var(--olive) 65%, var(--panel)); }
+.t-captions { background: color-mix(in srgb, var(--gold) 24%, var(--panel)); border-color: color-mix(in srgb, var(--gold) 65%, var(--panel)); }
+.t-voice {
+  border-color: color-mix(in srgb, var(--muted) 65%, var(--panel));
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--muted) 22%, var(--panel)) 0 3px, var(--panel) 3px 6px);
+}
+.clip.sel { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 2; }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--coral); pointer-events: none; transform: translateX(-1px); z-index: 3; }
+.playhead::before { content: ""; position: absolute; top: 0; left: -5px; width: 12px; height: 10px; background: var(--coral); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+
+/* Other studio stages */
+.view-pad { padding: 22px 20px 28px; }
+.view-head { margin: 0 0 18px; max-width: 70ch; }
+.view-head h2 { font-size: 24px; margin: 0 0 4px; }
+.view-head p { margin: 0; color: var(--muted); }
+.story-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; }
+#storyText { font-family: var(--serif); font-size: 18px; line-height: 1.65; min-height: 270px; resize: vertical; }
+.side h3 { font-size: 15px; font-family: var(--mono); font-weight: 400; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; }
+.value-tag { display: inline-block; font-size: 22px; font-weight: 600; color: var(--coral); border: 2px solid var(--coral); border-radius: 4px; padding: 2px 14px; margin-bottom: 22px; }
+.shape { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 0; border-left: 2px solid var(--line); }
+.shape li { padding: 6px 0 10px 16px; position: relative; }
+.shape li::before { content: ""; position: absolute; left: -6px; top: 13px; width: 10px; height: 10px; border-radius: 50%; background: var(--page); border: 2px solid var(--forest); }
+.shape b { display: block; }
+.shape span { font-size: 14px; color: var(--muted); }
+.suggest { background: var(--panel); border: 1px dashed var(--line); border-radius: 4px; padding: 12px 14px; }
+.suggest p { margin: 0 0 8px; }
+.suggest .who { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.card canvas { display: block; width: 100%; height: auto; border-radius: 2px; }
+.card h3 { font-size: 17px; margin: 4px 0 0; }
+.card p { margin: 0; font-size: 14px; color: var(--muted); }
+.card .chips { margin-top: auto; padding-top: 4px; }
+.card.dashed { border-style: dashed; background: none; align-items: center; justify-content: center; text-align: center; min-height: 200px; cursor: pointer; color: var(--muted); }
+.card.dashed:hover { color: var(--forest); border-color: var(--forest); }
+.cast-canvas { aspect-ratio: 1; }
+.sets { margin-top: 26px; }
+
+.premiere { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; align-items: start; }
+.cinema { background: #120f0c; border-radius: 6px; padding: 14px; }
+.cinema canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 2px; }
+.cinema .transport { margin-top: 10px; color: #e9dfcc; }
+.cinema .time { color: #b5a68f; }
+.credits { font-family: var(--mono); font-size: 14px; display: grid; gap: 14px; }
+.credits dt { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.credits dd { margin: 2px 0 0; font-family: var(--serif); font-size: 16px; }
+.planned { font-family: var(--mono); font-size: 11px; color: var(--coral); margin-left: 6px; }
+
+/* Presenter notes */
+.notes-on [data-note] { position: relative; }
+.notes-on [data-note]::after {
+  content: attr(data-note); position: absolute; z-index: 6; top: -12px; right: 12px;
+  background: var(--tape); color: var(--ink); font-family: var(--mono); font-size: 12px; line-height: 1.3;
+  padding: 3px 9px; transform: rotate(-1.2deg); pointer-events: none; max-width: 80%;
+}
+
+@media (max-width: 1000px) {
+  .animate { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "scenes" "insp" "tl"; }
+  .stage-col { border: 0; }
+  .scenes, .inspector { border-top: 1px solid var(--line); }
+  #sceneList { display: flex; overflow-x: auto; padding-bottom: 4px; }
+  #sceneList li { flex: 0 0 150px; }
+  .story-grid, .premiere { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .meter-bar i { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap notes-on" id="wrap">
+  <div class="intro">
+    <div>
+      <p class="eyebrow">Concept wireframe</p>
+      <h1>SAI Canvas · Director mode</h1>
+      <p class="lede">The child draws, writes and directs. The AI crew animates. Click around: play the film, drag clips on the timeline, draw on the stage, or tell the crew what to change.</p>
+    </div>
+    <label class="notes-toggle"><input type="checkbox" id="notesToggle" checked> Presenter notes</label>
+  </div>
+
+  <div class="app">
+    <header class="bar">
+      <div class="brand"><span class="logo">SAI</span><span class="film-name">Mia’s Lantern</span></div>
+      <nav class="tabs" role="tablist" aria-label="Studio stages" data-note="Five studio stages, like a real film studio">
+        <button class="tab" role="tab" data-tab="story" aria-selected="false">Story</button><span class="tab-sep" aria-hidden="true">›</span>
+        <button class="tab" role="tab" data-tab="storyboard" aria-selected="false">Storyboard</button><span class="tab-sep" aria-hidden="true">›</span>
+        <button class="tab" role="tab" data-tab="cast" aria-selected="false">Cast</button><span class="tab-sep" aria-hidden="true">›</span>
+        <button class="tab" role="tab" data-tab="animate" aria-selected="true">Animate</button><span class="tab-sep" aria-hidden="true">›</span>
+        <button class="tab" role="tab" data-tab="premiere" aria-selected="false">Premiere</button>
+      </nav>
+      <div class="bar-right">
+        <div class="meter" data-note="Goal: a 5-minute film">
+          <span>Film length <b id="lenText">0:44</b> of 5:00</span>
+          <span class="meter-bar"><i id="lenBar"></i></span>
+        </div>
+        <button class="btn primary" id="playFilm" type="button">▶ Play film</button>
+      </div>
+    </header>
+
+    <!-- ANIMATE -->
+    <section class="animate" id="view-animate" role="tabpanel">
+      <aside class="scenes" data-note="Storyboard: scenes in order">
+        <h2 class="panel-h">Scenes</h2>
+        <ol id="sceneList"></ol>
+        <button class="add" id="addScene" type="button">+ Add scene</button>
+      </aside>
+
+      <div class="stage-col" data-note="Stage: draw ⇄ preview">
+        <div class="stage-tools">
+          <div class="seg" role="group" aria-label="Stage mode">
+            <button type="button" id="modePreview" aria-pressed="true">Preview</button>
+            <button type="button" id="modeDraw" aria-pressed="false">Draw</button>
+          </div>
+          <div class="swatches" id="swatches" hidden></div>
+          <button class="btn small" id="clearDraw" type="button" hidden>Clear my drawing</button>
+        </div>
+        <div class="stage-frame" id="stageFrame">
+          <canvas id="stage" width="1280" height="720" aria-label="Film stage"></canvas>
+          <span class="draw-hint" id="drawHint" hidden>Drawing on this scene. Your marks become part of the film.</span>
+        </div>
+        <div class="transport">
+          <button class="btn small" id="restart" type="button" aria-label="Back to start of scene">⏮</button>
+          <button class="btn small" id="playScene" type="button">▶ Play scene</button>
+          <span class="time" id="timeText">0.0s / 10s</span>
+          <span class="spacer"></span>
+          <span class="time" id="sceneText">Scene 2 of 5</span>
+        </div>
+      </div>
+
+      <aside class="inspector" data-note="Inspector + AI crew">
+        <h2 class="panel-h">Inspector</h2>
+        <div id="insp"></div>
+        <div class="crew">
+          <h3>Tell the crew</h3>
+          <p class="insp-sub">Say what you want in plain words. The crew changes only this scene.</p>
+          <form id="crewForm">
+            <input type="text" id="crewIn" placeholder="e.g. make it rain" aria-label="Instruction for the crew" autocomplete="off">
+            <button class="btn" type="submit">Send</button>
+          </form>
+          <div class="chips" id="crewChips"></div>
+          <p id="crewLog" aria-live="polite" hidden></p>
+        </div>
+      </aside>
+
+      <div class="timeline" data-note="Timeline: the child directs the timing">
+        <div class="tl-head">
+          <h2 class="panel-h">Timeline · <span id="tlScene"></span></h2>
+          <span class="hint">Drag a clip to change when it happens. Click the ruler to jump.</span>
+        </div>
+        <div class="tl-scroll">
+          <div class="tl" id="tl">
+            <div class="tl-row ruler"><div class="tl-label"></div><div class="tl-lane" id="ruler"></div></div>
+            <div class="tl-row"><div class="tl-label">Mia</div><div class="tl-lane" id="lane-hero"></div></div>
+            <div class="tl-row"><div class="tl-label">Camera</div><div class="tl-lane" id="lane-camera"></div></div>
+            <div class="tl-row"><div class="tl-label">Effects</div><div class="tl-lane" id="lane-effects"></div></div>
+            <div class="tl-row"><div class="tl-label">Captions</div><div class="tl-lane" id="lane-captions"></div></div>
+            <div class="tl-row"><div class="tl-label">Voice</div><div class="tl-lane" id="lane-voice"></div></div>
+            <div class="playhead" id="playhead"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STORY -->
+    <section class="view-pad" id="view-story" role="tabpanel" hidden>
+      <div class="view-head">
+        <h2>Story</h2>
+        <p>The child writes or speaks their story. Their words are never rewritten; the story editor can only ask questions and suggest.</p>
+      </div>
+      <div class="story-grid">
+        <div data-note="The child’s own words">
+          <label class="field"><span>Written by the child</span>
+            <textarea id="storyText">Mia set off to visit Gran before dark. One night, Mia heard thunder over the hills, so she held her lantern high. Under a hedge sat a little fox cub, shivering. “Are you lost?” asked Mia. Mia was scared, but she lit the way home. The fox cub was home. Mia felt brave and proud.</textarea>
+          </label>
+          <div class="chips"><span class="chip">58 words</span><span class="chip">typed</span><span class="chip">or spoken aloud</span></div>
+        </div>
+        <div class="side">
+          <h3>This week’s value</h3>
+          <span class="value-tag">Courage</span>
+          <h3>Story shape</h3>
+          <ol class="shape" data-note="Values guide the story structure">
+            <li><b>Beginning</b><span>Mia sets off · Scene 1</span></li>
+            <li><b>Problem</b><span>The storm, a lost fox cub · Scenes 2–3</span></li>
+            <li><b>Brave choice</b><span>Lighting the way · Scene 4</span></li>
+            <li><b>Ending</b><span>Home at last · Scene 5</span></li>
+          </ol>
+          <div class="suggest">
+            <p class="who">Story editor asks</p>
+            <p>How does Mia feel when she first hears the thunder?</p>
+            <button class="btn small" type="button" id="dismissSuggest">Thanks, I’ll think about it</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STORYBOARD -->
+    <section class="view-pad" id="view-storyboard" role="tabpanel" hidden>
+      <div class="view-head">
+        <h2>Storyboard</h2>
+        <p>The story becomes scene cards. The child can reorder, rename and add scenes. Longer films are built from more scenes, each one generated and directed on its own.</p>
+      </div>
+      <div class="grid-cards" id="board"></div>
+    </section>
+
+    <!-- CAST -->
+    <section class="view-pad" id="view-cast" role="tabpanel" hidden>
+      <div class="view-head">
+        <h2>Cast and sets</h2>
+        <p>Characters are drawn once and reused in every scene, so Mia looks the same from the first scene to the last. SAI splits each drawing into parts so it can move like a puppet.</p>
+      </div>
+      <div class="grid-cards" id="castGrid" data-note="The Film Bible: shared cast and sets">
+        <article class="card">
+          <canvas class="cast-canvas" id="castMia" width="400" height="400"></canvas>
+          <h3>Mia</h3>
+          <p>The hero. In scenes 1–5.</p>
+          <div class="chips"><span class="chip">head</span><span class="chip">body</span><span class="chip">arms</span><span class="chip">legs</span><span class="chip">lantern</span></div>
+        </article>
+        <article class="card">
+          <canvas class="cast-canvas" id="castFox" width="400" height="400"></canvas>
+          <h3>Fox cub</h3>
+          <p>A new friend. In scenes 3–5.</p>
+          <div class="chips"><span class="chip">head</span><span class="chip">body</span><span class="chip">tail</span></div>
+        </article>
+        <button class="card dashed" type="button" id="newChar"><span style="font-size:28px">+</span><span>Draw a new character</span></button>
+      </div>
+      <div class="sets">
+        <h3 class="panel-h">Sets</h3>
+        <div class="grid-cards">
+          <article class="card"><canvas id="setSunset" width="640" height="360"></canvas><h3>Hills at sunset</h3><p>Scene 1</p></article>
+          <article class="card"><canvas id="setNight" width="640" height="360"></canvas><h3>Hills at night</h3><p>Scenes 2–4</p></article>
+          <article class="card"><canvas id="setDawn" width="640" height="360"></canvas><h3>Hills at dawn</h3><p>Scene 5</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREMIERE -->
+    <section class="view-pad" id="view-premiere" role="tabpanel" hidden>
+      <div class="view-head">
+        <h2>Premiere</h2>
+        <p>The finished film, with titles and credits, ready for the showcase evening.</p>
+      </div>
+      <div class="premiere">
+        <div class="cinema" data-note="Full-screen cinema mode">
+          <canvas id="premiereCanvas" width="1280" height="720" aria-label="Premiere player"></canvas>
+          <div class="transport">
+            <button class="btn small" id="playPremiere" type="button">▶ Play premiere</button>
+            <span class="time" id="premTime">Scene 1 · 0.0s</span>
+          </div>
+        </div>
+        <dl class="credits">
+          <div><dt>Film</dt><dd>Mia’s Lantern</dd></div>
+          <div><dt>Director, writer and artist</dt><dd>A Year 4 pupil</dd></div>
+          <div><dt>Voice of Mia</dt><dd>The director</dd></div>
+          <div><dt>Animation crew</dt><dd>SAI Canvas</dd></div>
+          <div><dt>Value explored</dt><dd>Courage</dd></div>
+          <div class="chips">
+            <button class="btn small" type="button" disabled>Download MP4</button><span class="planned">planned</span>
+          </div>
+          <div class="chips">
+            <button class="btn small" type="button" disabled>Share with parents</button><span class="planned">teacher approves first</span>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const W = 1280, H = 720, GY = H * 0.8;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let boil = 0;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const EASE = {
+    gentle: k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2,
+    quick: k => 1 - Math.pow(1 - k, 3),
+    bouncy: k => { const c = 1.70158; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); },
+    linear: k => k,
+  };
+  const jit = n => { const v = Math.sin(n * 12.9898 + boil * 78.233) * 43758.5453; return (v - Math.floor(v) - .5) * 3.2; };
+  let uid = 0;
+  const C = (track, type, label, start, end, extra = {}) => Object.assign({ id: ++uid, track, type, label, start, end, ease: "gentle" }, extra);
+
+  const SKIES = {
+    day: { top: "#93c9ec", bot: "#e7f4fb", dark: 0 },
+    sunset: { top: "#ee9a5c", bot: "#f8dfae", dark: .06 },
+    night: { top: "#141c45", bot: "#3a4677", dark: .42 },
+    dawn: { top: "#eab1a0", bot: "#d0e5ee", dark: .03 },
+  };
+  const SKY_NAMES = { day: "Day", sunset: "Sunset", night: "Night", dawn: "Dawn" };
+
+  const scenes = [
+    { name: "Mia sets off", sky: "sunset", dur: 8, heroX: .16, fox: null, strokes: [], clips: [
+      C("hero", "walk", "walk", .4, 6.2, { to: .46 }),
+      C("captions", "caption", "", .3, 7.7, { text: "Mia set off to visit Gran before dark." }),
+      C("voice", "voice", "recording 1", .4, 6.5),
+    ]},
+    { name: "The storm", sky: "night", dur: 10, heroX: .3, fox: null, strokes: [], clips: [
+      C("hero", "walk", "walk", 0, 3.6, { to: .5 }),
+      C("hero", "hop", "hop", 3.8, 4.7, { ease: "bouncy" }),
+      C("hero", "lightUp", "lightUp", 6, 10),
+      C("camera", "focus", "focus Mia", 2, 5.4),
+      C("effects", "rain", "rain", 4.4, 10),
+      C("captions", "caption", "", .3, 5.6, { text: "One night, Mia heard thunder over the hills." }),
+      C("captions", "caption", "", 5.8, 9.8, { text: "She held her lantern high." }),
+      C("voice", "voice", "recording 2", .4, 9.2),
+    ]},
+    { name: "A lost fox cub", sky: "night", dur: 8, heroX: .3, fox: { x: .74, follow: false }, strokes: [], clips: [
+      C("hero", "walk", "walk", 0, 3.8, { to: .52 }),
+      C("hero", "lightUp", "lightUp", 0, 8),
+      C("hero", "say", "say", 4.2, 7.4, { text: "Are you lost?" }),
+      C("camera", "focus", "focus Mia", 4, 7.6),
+      C("effects", "rain", "rain", 0, 8),
+      C("captions", "caption", "", .3, 7.7, { text: "Under a hedge sat a little fox cub, shivering." }),
+      C("voice", "voice", "recording 3", .4, 7.2),
+    ]},
+    { name: "Lighting the way", sky: "night", dur: 10, heroX: .3, fox: { x: 0, follow: true }, strokes: [], clips: [
+      C("hero", "lightUp", "lightUp", 0, 10),
+      C("hero", "walk", "walk", 1.5, 8.5, { to: .7 }),
+      C("effects", "sparkles", "sparkles", 5.5, 9.5),
+      C("captions", "caption", "", .3, 9.7, { text: "Mia was scared, but she lit the way home." }),
+      C("voice", "voice", "recording 4", .4, 8.8),
+    ]},
+    { name: "Home at last", sky: "dawn", dur: 8, heroX: .5, fox: { x: .66, follow: false }, strokes: [], clips: [
+      C("hero", "hop", "hop", 1, 2, { ease: "bouncy" }),
+      C("hero", "wave", "wave", 2.5, 5.5),
+      C("camera", "focus", "focus Mia", 4.5, 8),
+      C("captions", "caption", "", .3, 7.7, { text: "The fox cub was home. Mia felt brave and proud." }),
+      C("voice", "voice", "recording 5", .4, 7),
+    ]},
+  ];
+  let heroSize = .34;
+
+  let cur = 1, t = 0, playing = false, filmMode = false, mode = "preview", selected = null, view = "animate";
+  let penColor = "#2a211b";
+
+  /* ---------- Drawing helpers ---------- */
+  function wl(ctx, pts, seed) {
+    ctx.beginPath();
+    pts.forEach((p, i) => { const x = p[0] + jit(seed + i * 2), y = p[1] + jit(seed + i * 2 + 1); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke();
+  }
+  function circle(ctx, x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); }
+  function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+  }
+  function glow(ctx, x, y, r, rgb, a) {
+    if (r <= 1) return;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+
+  function drawMia(ctx, x, y, s, st) {
+    y -= st.hopY;
+    const ink = "#2a211b", r = s * .12, headY = y - s * .82;
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = Math.max(3, s * .028); ctx.strokeStyle = ink;
+    wl(ctx, [[x - s * .06, y - s * .28], [x - s * .08, y]], 1);
+    wl(ctx, [[x + s * .06, y - s * .28], [x + s * .08, y]], 3);
+    ctx.fillStyle = "#d9604a";
+    ctx.beginPath(); ctx.moveTo(x + jit(5), y - s * .68); ctx.lineTo(x - s * .2 + jit(6), y - s * .26); ctx.lineTo(x + s * .2 + jit(7), y - s * .26); ctx.closePath(); ctx.fill(); ctx.stroke();
+    const waveUp = st.wave !== 0;
+    const lh = waveUp ? [x - s * (.24 + .05 * st.wave), y - s * .86] : [x - s * .2, y - s * .42];
+    wl(ctx, [[x - s * .05, y - s * .6], lh], 9);
+    const lx = x + s * .25, ly = y - s * .44;
+    wl(ctx, [[x + s * .05, y - s * .6], [lx, ly - s * .03]], 11);
+    ctx.lineWidth = Math.max(2, s * .016);
+    wl(ctx, [[lx, ly - s * .03], [lx, ly]], 13);
+    ctx.fillStyle = st.lit > 0 ? `rgb(255,${Math.round(lerp(176, 226, st.lit))},${Math.round(lerp(70, 140, st.lit))})` : "#b27a1f";
+    ctx.fillRect(lx - s * .045, ly, s * .09, s * .11); ctx.strokeRect(lx - s * .045 + jit(15), ly + jit(16), s * .09, s * .11);
+    ctx.lineWidth = Math.max(3, s * .028);
+    ctx.fillStyle = "#3a2a20";
+    circle(ctx, x - r * 1.05, headY + r * .2, r * .38); ctx.fill();
+    circle(ctx, x + r * 1.05, headY + r * .2, r * .38); ctx.fill();
+    ctx.fillStyle = "#f3cfa9"; circle(ctx, x + jit(17) * .5, headY, r); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#3a2a20"; ctx.beginPath(); ctx.arc(x, headY - r * .08, r * 1.04, Math.PI * 1.04, Math.PI * 1.96); ctx.fill();
+    ctx.fillStyle = ink; circle(ctx, x - r * .38, headY + r * .1, r * .1); ctx.fill(); circle(ctx, x + r * .38, headY + r * .1, r * .1); ctx.fill();
+    ctx.lineWidth = Math.max(2, s * .014); ctx.beginPath(); ctx.arc(x, headY + r * .3, r * .32, .2 * Math.PI, .8 * Math.PI); ctx.stroke();
+    return { x: lx, y: ly + s * .055 };
+  }
+
+  function drawFox(ctx, x, y, s, t) {
+    const ink = "#2a211b", bob = Math.sin(t * 5) * s * .02;
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = Math.max(2.5, s * .035); ctx.strokeStyle = ink;
+    ctx.fillStyle = "#d9772f";
+    ctx.beginPath(); ctx.moveTo(x - s * .35, y - s * .3); ctx.quadraticCurveTo(x - s * .8, y - s * .55 + bob, x - s * .62, y - s * .1); ctx.quadraticCurveTo(x - s * .5, y, x - s * .3, y - s * .12); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#fff3e0"; circle(ctx, x - s * .66, y - s * .45 + bob, s * .07); ctx.fill();
+    ctx.fillStyle = "#d9772f"; ctx.beginPath(); ctx.ellipse(x, y - s * .25, s * .38, s * .22, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    wl(ctx, [[x - s * .2, y - s * .1], [x - s * .22, y]], 21); wl(ctx, [[x + s * .2, y - s * .1], [x + s * .22, y]], 23);
+    const hx = x + s * .36, hy = y - s * .48 + bob;
+    ctx.beginPath(); ctx.moveTo(hx - s * .16, hy - s * .1); ctx.lineTo(hx - s * .12, hy - s * .34); ctx.lineTo(hx - s * .02, hy - s * .14); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx + s * .04, hy - s * .14); ctx.lineTo(hx + s * .14, hy - s * .34); ctx.lineTo(hx + s * .17, hy - s * .08); ctx.closePath(); ctx.fill(); ctx.stroke();
+    circle(ctx, hx, hy, s * .18); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#fff3e0"; ctx.beginPath(); ctx.ellipse(hx + s * .06, hy + s * .07, s * .1, s * .07, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = ink; circle(ctx, hx - s * .05, hy - s * .02, s * .025); ctx.fill(); circle(ctx, hx + s * .08, hy - s * .02, s * .025); ctx.fill();
+    circle(ctx, hx + s * .14, hy + s * .06, s * .03); ctx.fill();
+  }
+
+  function scenery(ctx) {
+    ctx.fillStyle = "#8aa35a"; ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, 470);
+    for (let x = 0; x <= W; x += 40) ctx.lineTo(x, 470 - Math.sin(x / 210) * 38 - Math.sin(x / 90) * 8);
+    ctx.lineTo(W, H); ctx.fill();
+    ctx.fillStyle = "#6f8c40"; ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, 560);
+    for (let x = 0; x <= W; x += 40) ctx.lineTo(x, 560 - Math.sin(x / 300 + 1) * 16);
+    ctx.lineTo(W, H); ctx.fill();
+    ctx.fillStyle = "#d9c08a"; ctx.beginPath(); ctx.ellipse(W / 2, 650, W * .62, 42, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#2a211b"; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.fillStyle = "#7a5233"; ctx.fillRect(98, 380, 26, 180); wl(ctx, [[98, 560], [98, 380]], 31); wl(ctx, [[124, 560], [124, 380]], 33);
+    ctx.fillStyle = "#4f6e2e";
+    [[111, 350, 70], [70, 390, 48], [154, 386, 50]].forEach(([cx, cy, r], i) => { circle(ctx, cx + jit(40 + i), cy, r); ctx.fill(); ctx.stroke(); });
+    ctx.fillStyle = "#ead9b6"; ctx.fillRect(1010, 450, 140, 110); ctx.strokeRect(1010 + jit(51), 450 + jit(52), 140, 110);
+    ctx.fillStyle = "#b0502c"; ctx.beginPath(); ctx.moveTo(995, 452); ctx.lineTo(1080 + jit(53), 382); ctx.lineTo(1165, 452); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#43607f"; ctx.fillRect(1098, 500, 32, 60); ctx.strokeRect(1098, 500, 32, 60);
+    ctx.fillStyle = "#8e9aab"; ctx.fillRect(1030, 470, 40, 34); ctx.strokeRect(1030 + jit(54), 470, 40, 34);
+  }
+
+  function heroState(s, t) {
+    let x = s.heroX, hopY = 0, lit = 0, wave = 0, say = null;
+    const list = s.clips.filter(c => c.track === "hero").sort((a, b) => a.start - b.start);
+    for (const c of list) {
+      const len = Math.max(.01, c.end - c.start), k = clamp((t - c.start) / len, 0, 1), e = (EASE[c.ease] || EASE.gentle)(k);
+      if (c.type === "walk") { if (t >= c.start) x = lerp(x, c.to, e); }
+      else if (c.type === "hop" && t >= c.start && t <= c.end) hopY = Math.max(hopY, Math.abs(Math.sin(k * Math.PI * 2)) * .075 * H);
+      else if (c.type === "lightUp" && t >= c.start) lit = Math.max(lit, clamp((t - c.start) / 1.2, 0, 1));
+      else if (c.type === "wave" && t >= c.start && t <= c.end) wave = Math.sin(k * Math.PI * 8) || .001;
+      else if (c.type === "say" && t >= c.start && t <= c.end) say = c.text;
+    }
+    return { x, hopY, lit, wave, say };
+  }
+
+  function cameraState(s, t, hx, hy) {
+    let z = 1, cx = W / 2, cy = H / 2;
+    for (const c of s.clips) {
+      if (c.track !== "camera" || t < c.start || t > c.end) continue;
+      const d = c.end - c.start, ramp = Math.min(1, d / 3);
+      const r = clamp(Math.min((t - c.start) / ramp, (c.end - t) / ramp), 0, 1), e = EASE.gentle(r);
+      z = 1 + .45 * e; cx = lerp(W / 2, hx, e); cy = lerp(H / 2, hy, e);
+    }
+    cx = clamp(cx, W / (2 * z), W - W / (2 * z)); cy = clamp(cy, H / (2 * z), H - H / (2 * z));
+    return { z, cx, cy };
+  }
+
+  function fade(c, t, dur) {
+    const a = clamp((t - c.start) / .6, 0, 1);
+    return c.end >= dur - .01 ? a : Math.min(a, clamp((c.end - t) / .6, 0, 1));
+  }
+  function rain(ctx, t, a) {
+    ctx.strokeStyle = `rgba(205,218,255,${.55 * a})`; ctx.lineWidth = 2.5; ctx.beginPath();
+    for (let i = 0; i < 170; i++) {
+      const x = ((i * 97.31) % W + t * 140) % (W + 100) - 50, y = ((i * 53.77) % H + t * 820) % (H + 60) - 30;
+      ctx.moveTo(x, y); ctx.lineTo(x - 10, y + 30);
+    }
+    ctx.stroke();
+  }
+  function star4(ctx, x, y, s) {
+    ctx.beginPath(); ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s);
+    ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s); ctx.fill();
+  }
+  function sparkles(ctx, t, a, cx, cy) {
+    ctx.fillStyle = `rgba(255,224,138,${a})`;
+    for (let i = 0; i < 16; i++) {
+      const ang = i * 2.39996 + t * .6, r = 60 + ((i * 37) % 120) + Math.sin(t * 2 + i) * 10;
+      star4(ctx, cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * .7, Math.max(2, 9 + 5 * Math.sin(t * 6 + i)));
+    }
+  }
+  function bubble(ctx, x, y, text) {
+    ctx.font = '600 30px "Source Serif 4", Georgia, serif';
+    const w = ctx.measureText(text).width + 36, h = 54, bx = clamp(x - w / 2, 10, W - w - 10), by = y - h;
+    ctx.fillStyle = "#fffdf6"; ctx.strokeStyle = "#2a211b"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x - 12, by + h - 1); ctx.lineTo(x, by + h + 18); ctx.lineTo(x + 12, by + h - 1); ctx.closePath(); ctx.fill(); ctx.stroke();
+    rr(ctx, bx, by, w, h, 16); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#2a211b"; ctx.textBaseline = "middle"; ctx.fillText(text, bx + 18, by + h / 2 + 1);
+  }
+  function caption(ctx, text) {
+    ctx.font = '600 32px "Source Serif 4", Georgia, serif';
+    const words = text.split(" "), lines = []; let line = "";
+    for (const w of words) { const test = line ? line + " " + w : w; if (ctx.measureText(test).width > W - 260 && line) { lines.push(line); line = w; } else line = test; }
+    lines.push(line);
+    const lh = 42, h = lines.length * lh + 26, w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 48;
+    const x = (W - w) / 2, y = H - h - 26;
+    ctx.fillStyle = "rgba(251,247,238,.93)"; rr(ctx, x, y, w, h, 8); ctx.fill();
+    ctx.fillStyle = "#2a211b"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, y + 13 + lh / 2 + i * lh));
+    ctx.textAlign = "left";
+  }
+
+  function renderScene(ctx, si, t, o = {}) {
+    const s = scenes[si], sky = SKIES[s.sky] || SKIES.day, night = sky.dark > .3;
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, sky.top); g.addColorStop(.7, sky.bot); g.addColorStop(1, sky.bot);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const st = heroState(s, t), hs = heroSize * H, hx = st.x * W;
+    const cam = o.noCamera ? { z: 1, cx: W / 2, cy: H / 2 } : cameraState(s, t, hx, GY - hs * .55);
+    ctx.save();
+    ctx.translate(W / 2, H / 2); ctx.scale(cam.z, cam.z); ctx.translate(-cam.cx, -cam.cy);
+    if (!night) { ctx.fillStyle = "#ffd27a"; circle(ctx, s.sky === "sunset" ? 270 : 320, s.sky === "sunset" ? 330 : 170, 58); ctx.fill(); }
+    scenery(ctx);
+    for (const k of s.strokes) {
+      ctx.strokeStyle = k.c; ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
+      k.p.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+      if (k.p.length === 1) ctx.lineTo(k.p[0][0] + .1, k.p[0][1]);
+      ctx.stroke();
+    }
+    if (s.fox && !o.noCast) drawFox(ctx, s.fox.follow ? (st.x - .12) * W : s.fox.x * W, GY, hs * .42, t);
+    const lan = o.noCast ? { x: 0, y: 0 } : drawMia(ctx, hx, GY, hs, st);
+    if (sky.dark > 0) { ctx.fillStyle = `rgba(10,14,40,${sky.dark})`; ctx.fillRect(0, 0, W, H); }
+    if (night) {
+      ctx.fillStyle = "#f3ead0"; circle(ctx, 1000, 120, 44); ctx.fill();
+      for (let i = 0; i < 45; i++) {
+        ctx.fillStyle = `rgba(255,248,220,${.45 + .45 * Math.sin(t * 3 + i * 1.7)})`;
+        circle(ctx, (i * 233.7) % W, (i * 97.1) % 300 + 18, 2.2); ctx.fill();
+      }
+    }
+    ctx.globalCompositeOperation = "lighter";
+    if (night) glow(ctx, 1050, 487, 80, "255,200,110", .6);
+    if (st.lit > 0 && !o.noCast) glow(ctx, lan.x, lan.y, 210 * st.lit, "255,196,100", .7 * st.lit);
+    ctx.globalCompositeOperation = "source-over";
+    for (const c of s.clips) {
+      if (c.track !== "effects" || t < c.start || t > c.end) continue;
+      const a = fade(c, t, s.dur);
+      if (c.type === "rain") rain(ctx, t, a);
+      else if (c.type === "sparkles") { ctx.globalCompositeOperation = "lighter"; sparkles(ctx, t, a, lan.x || hx, lan.y || GY - hs * .5); ctx.globalCompositeOperation = "source-over"; }
+    }
+    if (st.say && !o.noCast) bubble(ctx, hx, GY - hs - st.hopY - 14, st.say);
+    ctx.restore();
+    if (!o.noCaptions) { const cap = s.clips.find(c => c.track === "captions" && t >= c.start && t <= c.end); if (cap) caption(ctx, cap.text); }
+  }
+
+  function drawInto(canvas, si, t, o = {}) {
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+    renderScene(ctx, si, t, Object.assign({ noCaptions: canvas.width < 500 }, o));
+  }
+  const thumbT = s => s.dur * .6;
+
+  /* ---------- DOM ---------- */
+  const $ = id => document.getElementById(id);
+  const stage = $("stage"), sctx = stage.getContext("2d");
+  const prem = $("premiereCanvas"), pctx = prem.getContext("2d");
+  const lanes = { hero: $("lane-hero"), camera: $("lane-camera"), effects: $("lane-effects"), captions: $("lane-captions"), voice: $("lane-voice") };
+  const fmt = v => v.toFixed(1) + "s";
+
+  function clipLabel(c) {
+    if (c.type === "caption") return "“" + c.text + "”";
+    if (c.type === "say") return "say “" + c.text + "”";
+    if (c.type === "voice") return "◉ " + c.label;
+    return c.label;
+  }
+
+  function updateMeter() {
+    const total = scenes.reduce((a, s) => a + s.dur, 0);
+    $("lenText").textContent = Math.floor(total / 60) + ":" + String(Math.round(total % 60)).padStart(2, "0");
+    $("lenBar").style.width = Math.min(100, total / 300 * 100) + "%";
+  }
+
+  function buildScenes() {
+    const list = $("sceneList"); list.innerHTML = "";
+    scenes.forEach((s, i) => {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "scene-card" + (i === cur ? " on" : "");
+      b.setAttribute("aria-current", i === cur ? "true" : "false");
+      b.innerHTML = `<canvas width="384" height="216"></canvas><span class="sc-meta"><span class="sc-num">${i + 1}</span><span class="sc-name"></span><span class="sc-dur">${s.dur}s</span></span>`;
+      b.querySelector(".sc-name").textContent = s.name;
+      b.addEventListener("click", () => { stopPlay(); selectScene(i); });
+      li.appendChild(b); list.appendChild(li);
+      drawInto(b.querySelector("canvas"), i, thumbT(s));
+    });
+  }
+  function refreshThumb(i) {
+    const c = $("sceneList").children[i]?.querySelector("canvas");
+    if (c) drawInto(c, i, thumbT(scenes[i]));
+  }
+
+  function selectScene(i, keepTime) {
+    cur = i; if (!keepTime) t = 0; selected = null;
+    [...$("sceneList").children].forEach((li, j) => { const b = li.firstChild; b.classList.toggle("on", j === i); b.setAttribute("aria-current", j === i ? "true" : "false"); });
+    buildTimeline(); renderInspector();
+  }
+
+  function assignRows(clips) {
+    const rows = [];
+    clips.slice().sort((a, b) => a.start - b.start).forEach(c => {
+      let r = rows.findIndex(end => end <= c.start + .001);
+      if (r < 0) { r = rows.length; rows.push(0); }
+      rows[r] = c.end; c._row = r;
+    });
+    return Math.max(1, rows.length);
+  }
+
+  function buildTimeline() {
+    const s = scenes[cur];
+    $("tlScene").textContent = `Scene ${cur + 1}: ${s.name} · ${s.dur}s`;
+    const ruler = $("ruler"); ruler.innerHTML = "";
+    for (let i = 0; i <= s.dur; i++) {
+      const tk = document.createElement("span"); tk.className = "tick";
+      tk.style.left = (i / s.dur * 100) + "%"; tk.style.height = i % 2 ? "6px" : "";
+      if (i % 2 === 0 && i < s.dur) tk.textContent = i + "s";
+      ruler.appendChild(tk);
+    }
+    for (const k in lanes) {
+      const lane = lanes[k]; lane.innerHTML = "";
+      const clips = s.clips.filter(c => c.track === k);
+      const rows = assignRows(clips);
+      lane.style.height = (rows * 27 + 5) + "px";
+      clips.forEach(c => lane.appendChild(clipEl(c)));
+    }
+  }
+
+  function placeClip(b, c) {
+    const d = scenes[cur].dur;
+    b.style.left = (c.start / d * 100) + "%";
+    b.style.width = `calc(${(c.end - c.start) / d * 100}% - 2px)`;
+    b.style.top = (3 + (c._row || 0) * 27) + "px";
+  }
+
+  function clipEl(c) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = `clip t-${c.track}` + (selected === c ? " sel" : "");
+    b.textContent = clipLabel(c);
+    b.title = `${clipLabel(c)} · ${fmt(c.start)} to ${fmt(c.end)}`;
+    b.setAttribute("aria-label", `${clipLabel(c)}, ${fmt(c.start)} to ${fmt(c.end)}. Arrow keys move it.`);
+    placeClip(b, c);
+    b.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const lane = b.parentElement.getBoundingClientRect(), d = scenes[cur].dur, x0 = e.clientX, s0 = c.start, len = c.end - c.start;
+      let moved = false;
+      b.setPointerCapture(e.pointerId);
+      const move = ev => {
+        if (Math.abs(ev.clientX - x0) > 3) moved = true;
+        if (!moved) return;
+        const ns = clamp(Math.round((s0 + (ev.clientX - x0) / lane.width * d) * 10) / 10, 0, d - len);
+        c.start = ns; c.end = +(ns + len).toFixed(2); placeClip(b, c);
+        if (!playing) t = c.start;
+      };
+      const up = () => {
+        b.removeEventListener("pointermove", move); b.removeEventListener("pointerup", up); b.removeEventListener("pointercancel", up);
+        selectClip(c, !moved); if (moved) { buildTimeline(); refreshThumb(cur); focusClip(c); }
+      };
+      b.addEventListener("pointermove", move); b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);
+    });
+    b.addEventListener("keydown", e => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      const d = scenes[cur].dur, len = c.end - c.start, step = e.key === "ArrowLeft" ? -.1 : .1;
+      c.start = +clamp(c.start + step, 0, d - len).toFixed(2); c.end = +(c.start + len).toFixed(2);
+      if (!playing) t = c.start;
+      selected = c; buildTimeline(); renderInspector(); refreshThumb(cur); focusClip(c);
+    });
+    b.dataset.id = c.id;
+    return b;
+  }
+  function focusClip(c) { document.querySelector(`.clip[data-id="${c.id}"]`)?.focus({ preventScroll: true }); }
+
+  function selectClip(c, jump) {
+    selected = c;
+    if (jump && !playing) t = c.start + .01;
+    document.querySelectorAll(".clip").forEach(el => el.classList.toggle("sel", +el.dataset.id === c.id));
+    renderInspector();
+  }
+
+  function renderInspector() {
+    const box = $("insp"), s = scenes[cur], c = selected;
+    if (!c) {
+      box.innerHTML = `
+        <p class="insp-kind">Mia</p>
+        <p class="insp-sub">Character · drawn by the child · in every scene</p>
+        <label class="field"><span>Size</span><input type="range" id="iSize" min="0.2" max="0.5" step="0.01" value="${heroSize}"></label>
+        <label class="field"><span>Where Mia starts in this scene</span><input type="range" id="iX" min="0.05" max="0.9" step="0.01" value="${s.heroX}"></label>
+        <label class="field"><span>Sky</span><select id="iSky">${Object.keys(SKIES).map(k => `<option value="${k}" ${k === s.sky ? "selected" : ""}>${SKY_NAMES[k]}</option>`).join("")}</select></label>
+        <div class="field"><span>Puppet parts</span><div class="chips"><span class="chip">head</span><span class="chip">arms</span><span class="chip">legs</span><span class="chip">lantern</span></div></div>
+        <p class="insp-sub">Select a clip on the timeline to change it.</p>`;
+      $("iSize").addEventListener("input", e => { heroSize = +e.target.value; buildScenes(); });
+      $("iX").addEventListener("input", e => { s.heroX = +e.target.value; refreshThumb(cur); });
+      $("iSky").addEventListener("change", e => { s.sky = e.target.value; refreshThumb(cur); });
+      return;
+    }
+    const track = { hero: "Mia", camera: "Camera", effects: "Effect", captions: "Caption", voice: "Voice" }[c.track];
+    const hasText = c.type === "caption" || c.type === "say";
+    box.innerHTML = `
+      <p class="insp-kind">${track} · ${c.type === "caption" ? "caption" : c.type}</p>
+      <p class="insp-sub">Scene ${cur + 1}: ${s.name}</p>
+      <div class="field-row">
+        <label class="field"><span>Starts at (s)</span><input type="number" id="iStart" min="0" step="0.1" value="${c.start.toFixed(1)}"></label>
+        <label class="field"><span>Lasts (s)</span><input type="number" id="iLen" min="0.3" step="0.1" value="${(c.end - c.start).toFixed(1)}"></label>
+      </div>
+      ${c.type === "voice" ? "" : `<label class="field"><span>Movement</span><select id="iEase">${["gentle", "quick", "bouncy", "linear"].map(e => `<option ${e === c.ease ? "selected" : ""}>${e}</option>`).join("")}</select></label>`}
+      ${hasText ? `<label class="field"><span>Words</span><textarea id="iText" rows="2">${c.text.replace(/</g, "&lt;")}</textarea></label>` : ""}
+      ${c.type === "voice" ? `<p class="insp-sub">The child’s own recorded narration. Scene timing fits around it.</p>` : ""}
+      <div class="chips"><button class="btn small" type="button" id="iDone">Done</button><button class="btn small" type="button" id="iDel">Delete clip</button></div>`;
+    const d = s.dur;
+    $("iStart").addEventListener("change", e => { const len = c.end - c.start; c.start = clamp(+e.target.value || 0, 0, d - len); c.end = c.start + len; buildTimeline(); renderInspector(); refreshThumb(cur); });
+    $("iLen").addEventListener("change", e => { c.end = clamp(c.start + Math.max(.3, +e.target.value || .3), c.start + .3, d); buildTimeline(); renderInspector(); refreshThumb(cur); });
+    $("iEase")?.addEventListener("change", e => { c.ease = e.target.value; });
+    $("iText")?.addEventListener("input", e => {
+      c.text = e.target.value; const el = document.querySelector(`.clip[data-id="${c.id}"]`); if (el) el.textContent = clipLabel(c);
+    });
+    $("iDone").addEventListener("click", () => { selected = null; buildTimeline(); renderInspector(); });
+    $("iDel").addEventListener("click", () => { s.clips = s.clips.filter(x => x !== c); selected = null; buildTimeline(); renderInspector(); refreshThumb(cur); });
+  }
+
+  /* ---------- Tell the crew (simulated) ---------- */
+  const EXAMPLES = ["make it rain", "add sparkles at the end", "make Mia jump", "zoom in on Mia", "Mia says “Follow me!”", "make it daytime"];
+  EXAMPLES.forEach(x => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = x;
+    b.addEventListener("click", () => crew(x)); $("crewChips").appendChild(b);
+  });
+  $("crewForm").addEventListener("submit", e => { e.preventDefault(); const v = $("crewIn").value.trim(); if (v) { crew(v); $("crewIn").value = ""; } });
+
+  function crew(text) {
+    const s = scenes[cur], d = s.dur, at = clamp(Math.round(t * 10) / 10, 0, Math.max(0, d - 2)), q = text.toLowerCase();
+    let msg = "", nc = null;
+    const quote = text.match(/["“](.+?)["”]/);
+    if (quote || /\bsays?\b|speak|talk/.test(q)) nc = C("hero", "say", "say", at, Math.min(d, at + 3), { text: quote ? quote[1] : "Hello!" });
+    else if (/rain|storm|wet/.test(q)) nc = C("effects", "rain", "rain", at, d);
+    else if (/sparkl|magic|glitter/.test(q)) nc = C("effects", "sparkles", "sparkles", Math.max(0, d - 4), d);
+    else if (/jump|hop/.test(q)) nc = C("hero", "hop", "hop", at, Math.min(d, at + 1), { ease: "bouncy" });
+    else if (/zoom|close|focus/.test(q)) nc = C("camera", "focus", "focus Mia", at, Math.min(d, at + 3));
+    else if (/wave/.test(q)) nc = C("hero", "wave", "wave", at, Math.min(d, at + 2.5));
+    else if (/sunset|evening/.test(q)) { s.sky = "sunset"; msg = "Changed this scene’s sky to sunset."; }
+    else if (/night|dark/.test(q)) { s.sky = "night"; msg = "Changed this scene’s sky to night."; }
+    else if (/dawn|sunrise/.test(q)) { s.sky = "dawn"; msg = "Changed this scene’s sky to dawn."; }
+    else if (/day|sun|morning|light/.test(q)) { s.sky = "day"; msg = "Changed this scene’s sky to daytime."; }
+    if (nc) {
+      s.clips.push(nc); selected = nc; if (!playing) t = nc.start + .01;
+      msg = `Added ${clipLabel(nc)} from ${fmt(nc.start)} to ${fmt(nc.end)}. Drag it on the timeline to change when it happens.`;
+    }
+    if (!msg) msg = "In the full product the AI crew would write this into the scene. This demo understands: rain, sparkles, jump, zoom in, wave, says “…”, night, day, sunset.";
+    $("crewLog").hidden = false; $("crewLog").textContent = "Crew: " + msg;
+    buildTimeline(); renderInspector(); refreshThumb(cur);
+  }
+
+  /* ---------- Stage drawing ---------- */
+  const SW = ["#2a211b", "#d9604a", "#43607f", "#e2a93b", "#5f7232", "#ffffff"];
+  SW.forEach((c, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "swatch"; b.style.background = c;
+    b.setAttribute("aria-label", "Crayon colour " + (i + 1)); b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    b.addEventListener("click", () => { penColor = c; document.querySelectorAll(".swatch").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); });
+    $("swatches").appendChild(b);
+  });
+  function setMode(m) {
+    mode = m; if (m === "draw") stopPlay();
+    $("modePreview").setAttribute("aria-pressed", m === "preview"); $("modeDraw").setAttribute("aria-pressed", m === "draw");
+    $("swatches").hidden = $("clearDraw").hidden = $("drawHint").hidden = m !== "draw";
+    $("stageFrame").classList.toggle("drawing", m === "draw");
+  }
+  $("modePreview").addEventListener("click", () => setMode("preview"));
+  $("modeDraw").addEventListener("click", () => setMode("draw"));
+  $("clearDraw").addEventListener("click", () => { scenes[cur].strokes = []; refreshThumb(cur); });
+  let stroke = null;
+  const stagePt = e => { const r = stage.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+  stage.addEventListener("pointerdown", e => {
+    if (mode !== "draw") { togglePlay(false); return; }
+    stage.setPointerCapture(e.pointerId);
+    stroke = { c: penColor, p: [stagePt(e)] }; scenes[cur].strokes.push(stroke);
+  });
+  stage.addEventListener("pointermove", e => { if (stroke) stroke.p.push(stagePt(e)); });
+  const endStroke = () => { if (stroke) { stroke = null; refreshThumb(cur); } };
+  stage.addEventListener("pointerup", endStroke); stage.addEventListener("pointercancel", endStroke);
+
+  /* ---------- Playback ---------- */
+  function syncPlay() {
+    $("playFilm").textContent = playing && filmMode ? "❚❚ Pause film" : "▶ Play film";
+    $("playScene").textContent = playing && !filmMode ? "❚❚ Pause" : "▶ Play scene";
+    $("playPremiere").textContent = playing && filmMode ? "❚❚ Pause" : "▶ Play premiere";
+  }
+  function stopPlay() { playing = false; syncPlay(); }
+  function togglePlay(film) {
+    if (playing) { stopPlay(); return; }
+    if (mode === "draw") setMode("preview");
+    filmMode = film;
+    if (film && t >= scenes[cur].dur - .05 && cur === scenes.length - 1) { selectScene(0); }
+    if (t >= scenes[cur].dur - .05) t = 0;
+    playing = true; syncPlay();
+  }
+  $("playFilm").addEventListener("click", () => {
+    if (!playing) { selectScene(0); }
+    togglePlay(true);
+  });
+  $("playScene").addEventListener("click", () => togglePlay(false));
+  $("playPremiere").addEventListener("click", () => { if (!playing) selectScene(0); togglePlay(true); });
+  $("restart").addEventListener("click", () => { t = 0; });
+
+  const rulerEl = $("ruler");
+  let scrubbing = false;
+  const scrub = e => { const r = rulerEl.getBoundingClientRect(); t = clamp((e.clientX - r.left) / r.width, 0, 1) * scenes[cur].dur; };
+  rulerEl.addEventListener("pointerdown", e => { scrubbing = true; rulerEl.setPointerCapture(e.pointerId); stopPlay(); scrub(e); });
+  rulerEl.addEventListener("pointermove", e => { if (scrubbing) scrub(e); });
+  rulerEl.addEventListener("pointerup", () => { scrubbing = false; });
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(.1, (now - last) / 1000); last = now;
+    if (!reduce) boil = Math.floor(now / 125);
+    if (playing) {
+      t += dt;
+      const d = scenes[cur].dur;
+      if (t >= d) {
+        if (filmMode && cur < scenes.length - 1) { selectScene(cur + 1); t = 0; }
+        else { t = d; stopPlay(); }
+      }
+    }
+    const d = scenes[cur].dur;
+    if (view === "animate") {
+      sctx.setTransform(1, 0, 0, 1, 0, 0);
+      renderScene(sctx, cur, t, { noCamera: mode === "draw" });
+      $("playhead").style.left = `calc(96px + (100% - 96px) * ${clamp(t / d, 0, 1)})`;
+      $("timeText").textContent = `${t.toFixed(1)}s / ${d}s`;
+      $("sceneText").textContent = `Scene ${cur + 1} of ${scenes.length}`;
+    } else if (view === "premiere") {
+      pctx.setTransform(1, 0, 0, 1, 0, 0);
+      renderScene(pctx, cur, t);
+      $("premTime").textContent = `Scene ${cur + 1}: ${scenes[cur].name} · ${t.toFixed(1)}s`;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- Other views ---------- */
+  function buildBoard() {
+    const board = $("board"); board.innerHTML = "";
+    scenes.forEach((s, i) => {
+      const card = document.createElement("article"); card.className = "card";
+      const cap = s.clips.find(c => c.track === "captions");
+      card.innerHTML = `<canvas width="640" height="360"></canvas><h3></h3><p class="cap"></p>
+        <div class="chips"><span class="chip">${SKY_NAMES[s.sky]}</span><span class="chip">${s.dur}s</span><span class="chip">${s.clips.length} clips</span></div>
+        <button class="btn small" type="button">Direct this scene</button>`;
+      card.querySelector("h3").textContent = `${i + 1}. ${s.name}`;
+      card.querySelector(".cap").textContent = cap ? cap.text : "No caption yet.";
+      card.querySelector("button").addEventListener("click", () => { showTab("animate"); selectScene(i); });
+      board.appendChild(card);
+      drawInto(card.querySelector("canvas"), i, thumbT(s), { noCaptions: true });
+    });
+    const add = document.createElement("button"); add.type = "button"; add.className = "card dashed";
+    add.innerHTML = `<span style="font-size:28px">+</span><span>Add a scene</span>`;
+    add.addEventListener("click", () => { addScene(); buildBoard(); });
+    board.appendChild(add);
+  }
+
+  function drawCast() {
+    const paper = (c) => { const x = c.getContext("2d"); x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = "#fbf7ee"; x.fillRect(0, 0, c.width, c.height); return x; };
+    const m = paper($("castMia")); drawMia(m, 200, 370, 330, { hopY: 0, lit: 0, wave: 0 });
+    const f = paper($("castFox")); drawFox(f, 220, 330, 300, 0);
+    const sets = [["setSunset", "sunset"], ["setNight", "night"], ["setDawn", "dawn"]];
+    sets.forEach(([id, sky]) => {
+      const tmp = { name: "", sky, dur: 1, heroX: .5, fox: null, strokes: [], clips: [] };
+      scenes.push(tmp);
+      drawInto($(id), scenes.length - 1, 0, { noCast: true, noCaptions: true });
+      scenes.pop();
+    });
+  }
+
+  function addScene() {
+    scenes.push({ name: `Scene ${scenes.length + 1}`, sky: "day", dur: 8, heroX: .4, fox: null, strokes: [], clips: [
+      C("captions", "caption", "", .3, 7.7, { text: "What happens next?" }),
+    ]});
+    updateMeter(); buildScenes(); selectScene(scenes.length - 1);
+  }
+  $("addScene").addEventListener("click", addScene);
+  $("newChar").addEventListener("click", () => { showTab("animate"); setMode("draw"); });
+  $("dismissSuggest").addEventListener("click", e => { e.target.closest(".suggest").hidden = true; });
+
+  function showTab(name) {
+    view = name;
+    document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name ? "true" : "false"));
+    ["story", "storyboard", "cast", "animate", "premiere"].forEach(v => { $("view-" + v).hidden = v !== name; });
+    if (name === "storyboard") buildBoard();
+    if (name === "cast") drawCast();
+    if (name !== "animate" && name !== "premiere") stopPlay();
+  }
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+  $("notesToggle").addEventListener("change", e => $("wrap").classList.toggle("notes-on", e.target.checked));
+
+  /* ---------- Start ---------- */
+  updateMeter(); buildScenes(); selectScene(1); t = 4.6; syncPlay();
+  requestAnimationFrame(frame);
+  if (document.fonts) document.fonts.ready.then(() => buildScenes());
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ export function GenerationProgress({ job, onRetry }: { job: PublicVideoJob; onRe
   return (
     <section className="rounded-md border border-sand bg-paper p-6 shadow-card sm:p-8" aria-labelledby="generation-title">
       <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">Creation status</p>
-      <h2 id="generation-title" className="mt-2 font-mono text-2xl text-ink">{job.status === "failed" ? "The preview was not created" : "Creating a short preview"}</h2>
+      <h2 id="generation-title" className="mt-2 font-display text-2xl text-ink">{job.status === "failed" ? "The preview was not created" : "Creating a short preview"}</h2>
       <div className="mt-6" aria-live="polite" aria-atomic="true">
         <p className="font-semibold capitalize text-forest">{job.status.replaceAll("_", " ")}</p>
         <p className="mt-2 leading-7 text-ink/80">{job.safeStatusMessage}</p>

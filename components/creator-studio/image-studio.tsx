@@ -49,7 +49,7 @@ export function ImageStudio({ configured }: { configured: boolean }) {
     const extension = image.mimeType === "image/jpeg" ? "jpg" : image.mimeType === "image/webp" ? "webp" : "png";
     return <section className="mx-auto max-w-4xl rounded-md border border-sand bg-paper p-6 shadow-card sm:p-8" aria-labelledby="image-result-title">
       <p className="text-sm font-semibold uppercase tracking-widest text-teal">Completed</p>
-      <h2 id="image-result-title" className="mt-2 font-mono text-2xl text-ink">Your image is ready</h2>
+      <h2 id="image-result-title" className="mt-2 font-display text-2xl text-ink">Your image is ready</h2>
       <Image src={image.dataUrl} alt={idea.subject} width={1024} height={1024} unoptimized className="mt-6 max-h-[70vh] w-full rounded-md bg-mist object-contain" />
       <p className="mt-4 text-sm text-ink/70">AI-generated with Nano Banana. Check details and lettering before using the image.</p>
       <div className="mt-6 flex flex-wrap gap-3">
@@ -62,7 +62,7 @@ export function ImageStudio({ configured }: { configured: boolean }) {
 
   return <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_19rem]">
     <section className="rounded-md border border-sand bg-paper p-6 shadow-card sm:p-8" aria-labelledby="image-form-title">
-      <h2 id="image-form-title" className="font-mono text-2xl text-ink">Describe your image</h2>
+      <h2 id="image-form-title" className="font-display text-2xl text-ink">Describe your image</h2>
       <p className="mt-3 text-sm leading-6 text-ink/70">Build a still image with Nano Banana. Describe the details that matter most.</p>
       {!configured && <p role="status" className="mt-4 rounded bg-amber-50 p-4 text-sm text-amber-950">Add GEMINI_API_KEY to .env.local and restart the server to enable images.</p>}
       {message && <p role="alert" className="mt-4 rounded bg-amber-50 p-4 text-sm text-amber-950">{message}</p>}
@@ -81,6 +81,6 @@ export function ImageStudio({ configured }: { configured: boolean }) {
         </fieldset>
       </form>
     </section>
-    <aside className="h-fit rounded-md border border-sand bg-paper p-6"><h2 className="font-mono text-xl text-ink">Compose a clear scene</h2><p className="mt-3 text-sm leading-6 text-ink/70">Describe the subject’s appearance, a precise setting, and the pose you want to capture. Lighting and composition help set the atmosphere.</p><p className="mt-4 text-sm leading-6 text-ink/70">For text, enter only the exact words you want. Download the result before closing the page.</p></aside>
+    <aside className="h-fit rounded-md border border-sand bg-paper p-6"><h2 className="font-display text-xl text-ink">Compose a clear scene</h2><p className="mt-3 text-sm leading-6 text-ink/70">Describe the subject’s appearance, a precise setting, and the pose you want to capture. Lighting and composition help set the atmosphere.</p><p className="mt-4 text-sm leading-6 text-ink/70">For text, enter only the exact words you want. Download the result before closing the page.</p></aside>
   </div>;
 }

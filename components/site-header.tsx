@@ -1,27 +1,26 @@
 import Link from "next/link";
 
-import { ThemePicker } from "@/components/theme-picker";
+import { Logo } from "@/components/logo";
+import { ModeToggle } from "@/components/mode-toggle";
 import { navigation } from "@/lib/site-content";
 
 export function SiteHeader() {
   return (
     <header className="site-header sticky top-0 z-50 border-b">
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-4 sm:px-6 lg:px-10">
         <div className="flex items-center justify-between gap-6">
-          <Link href="/#home" className="flex items-center gap-3" aria-label="SAI home">
-            <div>
-              <p className="font-mono text-xl font-semibold text-forest">SAI</p>
-              <p className="text-sm text-ink/65">Character, creativity and responsible AI</p>
-            </div>
+          <Link href="/#home" className="flex shrink-0 items-center gap-4" aria-label="S³AI home">
+            <Logo />
+            <p className="hidden whitespace-nowrap text-sm text-ink/65 xl:block">Character, creativity and responsible AI</p>
           </Link>
 
-          <nav aria-label="Primary" className="hidden lg:block">
-            <ul className="flex items-center gap-2">
+          <nav aria-label="Primary" className="hidden flex-1 justify-center lg:flex">
+            <ul className="flex items-center gap-1 xl:gap-2">
               {navigation.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`rounded px-3 py-2 text-xs transition ${item.highlighted ? "bg-sky font-semibold text-forest hover:bg-sky/70" : "text-ink/75 hover:bg-mist hover:text-forest"}`}
+                    className={`whitespace-nowrap rounded px-3 py-2 text-sm transition 2xl:text-base ${item.highlighted ? "bg-sky font-semibold text-forest hover:bg-sky/70" : "text-ink/75 hover:bg-sky/60 hover:text-forest"}`}
                   >
                     {item.label}
                   </Link>
@@ -30,13 +29,13 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          <div className="flex items-center gap-2">
-            <ThemePicker />
+          <div className="flex shrink-0 items-center gap-2">
+            <ModeToggle />
             <Link
-            href="/#contact"
-            className="rounded border border-sand px-5 py-3 text-sm font-medium text-forest transition hover:border-forest hover:bg-mist"
-          >
-            Contact
+              href="/#contact"
+              className="whitespace-nowrap rounded border border-sand px-5 py-3 text-sm font-medium text-forest transition hover:border-forest hover:bg-sky/60"
+            >
+              Contact
             </Link>
           </div>
         </div>
@@ -47,7 +46,7 @@ export function SiteHeader() {
               <li key={item.href} className="shrink-0">
                 <Link
                   href={item.href}
-                  className={`block rounded border px-3 py-2 text-xs transition ${item.highlighted ? "border-teal/25 bg-sky font-semibold text-forest" : "border-sand bg-paper text-ink/75 hover:border-forest/20 hover:text-forest"}`}
+                  className={`block whitespace-nowrap rounded border px-3 py-2 text-sm transition ${item.highlighted ? "border-teal/25 bg-sky font-semibold text-forest" : "border-sand bg-paper text-ink/75 hover:border-forest/20 hover:text-forest"}`}
                 >
                   {item.label}
                 </Link>

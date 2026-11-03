@@ -22,7 +22,7 @@ export function PageHero({
           <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">
             {eyebrow}
           </p>
-          <h1 className="mt-5 font-mono text-3xl leading-tight text-ink sm:text-[2.375rem]">
+          <h1 className="mt-5 font-display text-3xl leading-tight text-ink sm:text-[2.375rem]">
             {title}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-ink/80">{description}</p>
