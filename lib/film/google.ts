@@ -5,6 +5,31 @@ export class GoogleRequestError extends Error {
   get uncertain() { return this.status === undefined || this.status >= 500 || this.status === 408; }
 }
 
+/** Keep only useful, sanitised quota fields; never return the provider's raw payload. */
+function quotaDiagnostic(details: unknown, key: string, body: unknown) {
+  if (!Array.isArray(details)) return "";
+  const notes: string[] = [];
+  for (const detail of details.slice(0, 10)) {
+    if (!detail || typeof detail !== "object") continue;
+    if (detail["@type"] === "type.googleapis.com/google.rpc.QuotaFailure" && Array.isArray(detail.violations)) {
+      for (const violation of detail.violations.slice(0, 3)) {
+        if (!violation || typeof violation !== "object") continue;
+        const id = safeDiagnostic(violation.quotaId || violation.quotaMetric, key, body).slice(0, 180);
+        const model = safeDiagnostic(violation.quotaDimensions?.model, key, body).slice(0, 100);
+        const limit = typeof violation.quotaValue === "string" && /^\d{1,16}$/.test(violation.quotaValue) ? `; limit ${violation.quotaValue}` : "";
+        if (id) notes.push(`Quota: ${id}${model ? `; model ${model}` : ""}${limit}.`);
+      }
+    }
+    if (detail["@type"] === "type.googleapis.com/google.rpc.RetryInfo" && typeof detail.retryDelay === "string" && /^\d{1,7}(\.\d{1,9})?s$/.test(detail.retryDelay)) {
+      notes.push(`Google suggests retrying after ${detail.retryDelay}.`);
+    }
+    if (detail["@type"] === "type.googleapis.com/google.rpc.ErrorInfo" && typeof detail.reason === "string" && /^[A-Z_]{1,100}$/.test(detail.reason)) {
+      notes.push(`Reason: ${safeDiagnostic(detail.reason, key, body)}.`);
+    }
+  }
+  return notes.join(" ").slice(0, 1100);
+}
+
 function safeDiagnostic(message: unknown, key: string, body: unknown) {
   if (typeof message !== "string") return "";
   let cleaned = message.split(key).join("[redacted]");
@@ -28,9 +53,15 @@ export async function google(path: string, body?: unknown, timeout = 120_000) {
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     const diagnostic = safeDiagnostic(data.error?.message, key, body);
+    const quota = quotaDiagnostic(data.error?.details, key, body);
     const code = typeof data.error?.status === "string" && /^[A-Z_]+$/.test(data.error.status) ? ` ${data.error.status}` : "";
     const fallback = response.status === 429 ? "Google's quota has been reached." : "Google did not provide further details.";
-    throw new GoogleRequestError(`Google rejected ${stage} (${response.status}${code}): ${diagnostic || fallback}`, response.status);
+    const guidance = response.status === 402
+      ? " Check the API project's AI Studio billing and prepaid balance."
+      : response.status === 429 && !quota
+        ? " Google did not specify which quota was exceeded; check this model's limits and the API project's billing."
+        : "";
+    throw new GoogleRequestError(`Google rejected ${stage} (${response.status}${code}): ${diagnostic || fallback}${quota ? ` ${quota}` : ""}${guidance}`, response.status);
   }
   return response.json();
 }

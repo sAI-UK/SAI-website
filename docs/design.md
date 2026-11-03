@@ -1,36 +1,53 @@
 # Visual style
 
-The visual reference is the supplied LLM bias survey HTML. Only its presentation
-informs this site; SAI's content, routes and studio behaviour are retained.
+The site has one look, ballpoint pen on a notebook page, in two modes: daytime paper and a night sky. The moon and
+sun button in the header (`components/mode-toggle.tsx`) switches between them and remembers the choice in that browser.
+Dark mode colours are under `:root[data-mode="dark"]` in `app/globals.css`. The same drawings are used in both modes:
+`--art-filter` maps paper to moonlit navy and blue ink to pale chalk, with warm accents for the moon, windows and flame.
 
-- Warm parchment canvas (`#F5EDDC`), lighter paper panels (`#FBF7EE`) and fine sand rules.
-- Courier Prime headings, navigation and labels; Source Serif 4 reading text.
-  Google Fonts supplies these fonts, with local Courier and Georgia fallbacks.
-- Dark brown text, slate actions, olive labels and terracotta section markers.
-- Small corner radii, flat cards, ruled section headings and compact editorial spacing.
-- Existing responsive grids and mobile navigation remain in place.
+- Off-white paper with a faint squared grid behind every page (`body` in `app/globals.css`).
+- Pen blue for actions and labels, deep blue for headings, and a red pen for errors and warnings.
+- Fraunces headings, Inter reading text and Caveat handwritten notes, self-hosted through `next/font`.
+- Palette tokens are at the top of `app/globals.css`; font names are in `tailwind.config.ts`.
 
-Edit palette and font tokens in `tailwind.config.ts`. Shared editorial treatments,
-focus styles and reduced-motion behaviour live in `app/globals.css`. Section
-headings use `components/section-heading.tsx`.
+## The logo
 
-The site retains its light theme. The reference's theme toggle and research-page
-interactions are not part of this visual refresh.
+`components/logo.tsx` writes the logo as S³AI, like a term in an equation, circled in pen. The 3 takes up no width, so
+the letters still read as SAI.
 
-## Playful homepage layer
+## The homepage descends from space to the ground
 
-`components/story-sketch.tsx` adds an original SVG storybook drawing with four
-keyboard-accessible crayon colour buttons. These only change the illustration.
-`components/scroll-doodles.tsx` adds a scroll progress stroke and one-time section
-entrances. Content remains visible without JavaScript; reduced-motion preferences
-disable entrance and illustration animations. No animation library is required.
+| Part of the page | What is in the sky |
+| --- | --- |
+| Hero | Stars, the Plough, a climbing rocket, and a sun by day or a moon by night |
+| Below the hero | An aeroplane with a vapour trail, flying through a thick layer of cloud where the stars end |
+| Upper sections | Thin wispy cloud |
+| Middle sections | Small clouds, growing as you scroll |
+| Lower sections | The largest clouds, and the first birds |
+| Contact | Birds just above the ground |
+| Footer | The Northumberland-style meadow, then grass up to a timber fence carrying the footer text down to the bottom of the page, on every page |
 
-Crayon highlights, pastel programme cards and the illustration styles are grouped
-at the end of `app/globals.css`. Keep these decorations away from longer reading
-text, form fields and safety messages.
+Sky pieces are placed per section in `app/page.tsx` with `SkyArt` (page margins on wide screens) and
+`SkyGapCloud` (between sections below 1321px). Margin pieces never reach into the content column.
 
-`components/crayon-butterflies.tsx` supplies four small floating butterflies across
-the site (two on mobile). Clicking or keyboard-activating one sends it quickly to
-the opposite margin. A pause control and reduced-motion support stop the ongoing
-wing and drift animations. The overlay passes clicks through everywhere except
-its controls.
+## The feeling of falling
+
+Scrolling uses parallax, handled by `components/ballpoint/sky-drift.tsx`. Text never moves. Stars and high wisps lag
+behind the page, near clouds overtake it and speed up as you descend, and the meadow grows as it arrives. On the
+homepage, the meadow then holds in view briefly as you land (`.meadow-pin` in `globals.css`). Clouds stop at the end of
+the sky, so none appear over the land.
+`components/ballpoint/gravity-scroll.tsx` handles the feel of scrolling: wheel movement eases rather than jumps and gains
+speed on the way down, the page settles onto a section when it stops close to one, pulls itself onto the meadow, and
+takes more effort to leave it. Birds are live canvases (`bird-flock.tsx`), including over the meadow.
+Strengths are named constants at the top of both files. All of this is off for reduced motion.
+
+## How the drawings are made
+
+- **Illustrations** are images in `public/ballpoint`, so visitors' browsers do not have to draw them. To change one,
+  edit `scripts/ballpoint-art/` and run `node scripts/ballpoint-art/render.mjs` (needs Chrome or Edge).
+  `pieces.js` lists every image, `sky.js` draws the upper sky and `scenes.js` draws clouds and the meadow.
+- **Pen marks** (card edges, word marks, the logo loop) are stretchy SVG in `components/ballpoint/sketch.tsx`.
+  They arrive with the page and stay sharp at any zoom.
+- **Live pieces** are the drawing pad, birds and wind-blown grass, which share the pen in `lib/ballpoint/pen.ts`, and the
+  CSS-animated stars, shooting stars, clouds, plane and chimney smoke. Grass parts around the pointer and clouds ease
+  away from it. All of it holds still for people who prefer reduced motion.

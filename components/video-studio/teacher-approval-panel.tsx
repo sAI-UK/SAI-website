@@ -4,7 +4,7 @@ export function TeacherApprovalPanel({ job, mode, busy, onDecision }: { job: Pub
   return (
     <section className="rounded-md border-2 border-dashed border-teal/35 bg-paper p-6 sm:p-8" aria-labelledby="teacher-review-title">
       <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">Awaiting teacher review</p>
-      <h2 id="teacher-review-title" className="mt-2 font-mono text-2xl text-ink">Ask the supervising adult to review</h2>
+      <h2 id="teacher-review-title" className="mt-2 font-display text-2xl text-ink">Ask the supervising adult to review</h2>
       <p className="mt-4 max-w-2xl leading-7 text-ink/80">The story has passed the automated first check. That check can miss things, so an adult must review the story plan before a preview is created.</p>
       {mode === "teacher-guided" ? (
         <div className="mt-6 rounded-md bg-amber-50 p-5 text-sm leading-6 text-ink/75">Teacher authentication is not configured in this prototype. Generation is paused.</div>

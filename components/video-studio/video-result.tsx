@@ -9,7 +9,7 @@ export function VideoResult({ job, reportOpen, reported, onTryAgain, onNewStory,
   return (
     <section className="rounded-md border border-sand bg-paper p-6 shadow-card sm:p-8" aria-labelledby="result-title">
       <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">Completed</p>
-      <h2 id="result-title" className="mt-2 font-mono text-2xl text-ink">{job.title}</h2>
+      <h2 id="result-title" className="mt-2 font-display text-2xl text-ink">{job.title}</h2>
       <div className="mt-6 overflow-hidden rounded-md border border-sand bg-forest">
         {live ? <video aria-label={`Generated video: ${job.title}`} src={job.resultAssetReference} controls playsInline preload="metadata" onError={() => setMediaError(true)} className={`mx-auto max-h-[70vh] w-full ${job.settings?.aspectRatio === "9:16" ? "aspect-[9/16]" : "aspect-video"}`} /> : <Image src={job.resultAssetReference ?? "/video-studio/mock-story.svg"} alt="Demo animation: a paper story opens and colourful shapes become a simple landscape" width={960} height={540} unoptimized className="aspect-video w-full object-cover" />}
       </div>
@@ -28,7 +28,7 @@ export function VideoResult({ job, reportOpen, reported, onTryAgain, onNewStory,
       </div>
       {reportOpen && (
         <div className="mt-6 rounded-md border border-coral/30 bg-coral/10 p-5" role="group" aria-labelledby="report-title">
-          <h3 id="report-title" className="font-mono text-xl text-ink">What was wrong with the result?</h3>
+          <h3 id="report-title" className="font-display text-xl text-ink">What was wrong with the result?</h3>
           {reported ? <p className="mt-3" role="status">Thank you. Please also tell the adult supervising this activity.</p> : <div className="mt-4 flex flex-wrap gap-2">{reportCategories.map((category) => <button key={category} onClick={() => onReport(category)} className="min-h-11 rounded border border-sand bg-paper px-4 py-2 text-sm text-forest">{category}</button>)}</div>}
         </div>
       )}

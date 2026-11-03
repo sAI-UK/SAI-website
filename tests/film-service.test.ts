@@ -21,6 +21,17 @@ beforeEach(async () => { await mkdir(".data/test-runs", { recursive: true }); vi
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("film job lifecycle", () => {
+  it("stops after a quota rejection instead of submitting the scene again on advance", async () => {
+    const film = fixture(); film.status = "generating";
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { status: "RESOURCE_EXHAUSTED", message: "Quota exceeded" } }), { status: 429 }));
+    vi.stubGlobal("fetch", fetcher);
+    await advanceFilm(film);
+    await advanceFilm(film);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(film.status).toBe("failed");
+    expect(film.scenes[0].status).toBe("failed");
+    expect(film.scenes[0].error).toContain("429 RESOURCE_EXHAUSTED");
+  });
   it("submits a shared reference and resumes saved operations without duplicating generation", async () => {
     const film = fixture(); film.status = "generating"; film.brief.image = "data:image/png;base64,aW1hZ2U=";
     const fetcher = vi.fn().mockResolvedValueOnce(json({ name: operation })).mockResolvedValueOnce(json({ done: false })); vi.stubGlobal("fetch", fetcher);

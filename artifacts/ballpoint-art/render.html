@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Ballpoint art export</title>
+</head>
+<body>
+<!-- Run by render.mjs in headless Chrome. It draws each illustration and writes the results into the page as data. -->
+<pre id="out"></pre>
+<script src="pen.js"></script>
+<script src="scenes.js"></script>
+<script>
+(() => {
+  const WEBP_QUALITY = 0.78;
+  const results = [];
+
+  function canvasFor(w, h, d) {
+    const c = document.createElement("canvas");
+    c.width = Math.round(w * d); c.height = Math.round(h * d);
+    const ctx = c.getContext("2d");
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    return { c, ctx };
+  }
+  function save(name, c, w, h) {
+    results.push({ name, w: Math.round(w), h: Math.round(h), pxW: c.width, pxH: c.height, data: c.toDataURL("image/webp", WEBP_QUALITY) });
+  }
+
+  function meadow(name, W, H, d, seed, opt) {
+    const { c, ctx } = canvasFor(W, H, d);
+    Scenes.drawMeadow(ctx, W, H, seed, opt);
+    save(name, c, W, H);
+  }
+
+  // One image per corner. The canvas extends past the hero so the clouds keep their rounded edges.
+  function hero(prefix, W, H, d) {
+    const pad = 130;
+    const { c, ctx } = canvasFor(W, H + pad * 2, d);
+    ctx.translate(0, pad);
+    const trees = Scenes.drawHero(ctx, W, H);
+    for (const corner of ["tl", "bl", "br"]) {
+      const group = trees.filter((t) => t.corner === corner);
+      if (!group.length) continue;
+      const x0 = corner === "br" ? Math.max(0, Math.min(...group.map((t) => t.x - t.R * 1.2))) : 0;
+      const x1 = corner === "br" ? W : Math.min(W, Math.max(...group.map((t) => t.x + t.R * 1.2)));
+      const y0 = Math.max(0, Math.min(...group.map((t) => t.y - t.R * 1.2)) + pad);
+      const y1 = Math.min(H + pad * 2, Math.max(...group.map((t) => t.y + t.R * 1.2)) + pad);
+      const w = x1 - x0, h = y1 - y0;
+      const crop = document.createElement("canvas");
+      crop.width = Math.round(w * d); crop.height = Math.round(h * d);
+      crop.getContext("2d").drawImage(c, -x0 * d, -y0 * d);
+      save(`${prefix}-${corner}`, crop, w, h);
+    }
+  }
+
+  // A single cloud for the sides of the page, trimmed to its ink.
+  function cloud(name, width, seed, d) {
+    const W = width * 1.5, H = width * 0.95;
+    const { c, ctx } = canvasFor(W, H, d);
+    Scenes.drawCloud(ctx, W / 2, H - 34, width, Pen.mulberry32(seed));
+    const { data } = ctx.getImageData(0, 0, c.width, c.height);
+    let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+      if (data[(y * c.width + x) * 4 + 3] > 8) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    }
+    const crop = document.createElement("canvas");
+    crop.width = x1 - x0 + 1; crop.height = y1 - y0 + 1;
+    crop.getContext("2d").drawImage(c, -x0, -y0);
+    save(name, crop, crop.width / d, crop.height / d);
+  }
+
+  hero("hero", 1900, 815, 2);
+  hero("hero-mobile", 480, 790, 3);
+  // Larger clouds sit in the page margins on wide screens; the small ones sit between sections on narrow screens.
+  [["a", 400, 11], ["b", 400, 23], ["c", 320, 37], ["d", 320, 41], ["e", 240, 53], ["f", 240, 67]].forEach(([n, w, seed]) => cloud(`cloud-${n}`, w, seed, 2));
+  [["1", 170, 71], ["2", 170, 83], ["3", 170, 97]].forEach(([n, w, seed]) => cloud(`cloud-small-${n}`, w, seed, 2.5));
+  meadow("meadow", 1900, 620, 1.5, 2026, Scenes.MEADOW_DESKTOP);
+  meadow("meadow-mobile", 640, 440, 2, 1820, Scenes.MEADOW_MOBILE);
+
+  document.getElementById("out").textContent = "@@START@@" + JSON.stringify(results) + "@@END@@";
+})();
+</script>
+</body>
+</html>

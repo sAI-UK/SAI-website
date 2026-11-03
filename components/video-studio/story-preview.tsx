@@ -16,7 +16,7 @@ export function StoryPreview({ story, onEdit }: { story: StructuredStory; onEdit
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.06em] text-teal">Story plan</p>
-          <h2 id="story-plan-title" className="mt-2 font-mono text-2xl text-ink">Your idea, in your words</h2>
+          <h2 id="story-plan-title" className="mt-2 font-display text-2xl text-ink">Your idea, in your words</h2>
         </div>
         <button onClick={onEdit} className="min-h-11 rounded border border-forest/20 px-5 py-2 text-sm font-semibold text-forest hover:bg-mist focus:outline-none focus:ring-4 focus:ring-teal/20">Edit story</button>
       </div>
